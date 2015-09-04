@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Event Manager</title>
+    <% include ../partials/header.ejs %>
+</head>
+<body>
+    <div class="container">
+        <div class="center-block">
+            <% if (typeof errors != 'undefined') { %>
+                <div class="alert alert-danger">
+                    <% errors.forEach(function(error) { %>
+                        <div><%= error %></div>
+                    <% }) %>
+                </div>
+            <% } %>
+            <form action="/events/new" method="POST">
+                <div>
+                    <div><label for="name">Name</label></div>
+                    <div><input id="name" name="name" type="text" value="<%= locals.name || '' %>" /></div>
+                </div>
+                <div>
+                    <div><label for="description">Description</label></div>
+                    <div><textarea id="description" name="description"><%= locals.description || '' %></textarea></div>
+                </div>
+                <div>
+                    <div><label for="start">Start Date and Time</label></div>
+                    <div><input id="start" name="start" type="text" value="<%= locals.start || ''%>" /></div>
+                </div>
+                <div>
+                    <div>
+                        <input type="submit" value="Create" />
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
