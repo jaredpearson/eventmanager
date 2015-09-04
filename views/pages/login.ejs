@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Event Manager</title>
+    <% include ../partials/header.ejs %>
+</head>
+<body class="login-page">
+    <div class="container">
+        <div class="center-block login-form-container">
+            <% if (typeof errors != 'undefined') { %>
+                <div class="alert alert-danger">
+                    <% errors.forEach(function(error) { %>
+                        <div><%= error %></div>
+                    <% }) %>
+                </div>
+            <% } %>
+            <form action="/login" method="POST">
+                <div>
+                    <div><label for="username">Username</label></div>
+                    <div><input id="username" name="username" type="text" /></div>
+                </div>
+                <div>
+                    <div><label for="password">Password</label></div>
+                    <div><input id="password" name="password" type="password" /></div>
+                </div>
+                <div>
+                    <div>
+                        <input type="submit" value="Log in" />
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

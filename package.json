@@ -1,0 +1,33 @@
+{
+  "name": "eventmanager",
+  "version": "1.0.0",
+  "description": "Manage events",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://jaredpearson@bitbucket.org/jaredpearson/eventmanager.git"
+  },
+  "author": "jaredapearson@gmail.com",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 0.10.0"
+  },
+  "dependencies": {
+    "body-parser": "^1.13.3",
+    "ejs": "^2.3.3",
+    "express": "^4.13.3",
+    "express-session": "^1.11.3",
+    "pg": "^4.4.1",
+    "q": "^1.4.1"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-clean": "^0.6.0",
+    "grunt-contrib-copy": "^0.8.1",
+    "grunt-contrib-less": "^1.0.1",
+    "grunt-mkdir": "^0.1.2"
+  }
+}
