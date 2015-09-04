@@ -5,5 +5,18 @@
     <% include ../partials/header.ejs %>
 </head>
 <body>
+    <div class="container">
+        <h2>Upcomping Events</h2>
+        <div>
+            <a href="/events/new">New Event</a>
+        </div>
+        <div>
+            <% events.forEach(function(event){ %> 
+                <div>
+                    <%= event.name %>
+                </div>
+            <%}) %>
+        </div>
+    </div>
 </body>
 </html>
