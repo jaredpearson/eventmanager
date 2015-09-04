@@ -41,9 +41,11 @@ module.exports = {
             .then(function() {
                 return client.query('COMMIT');
             })
+            .then(function() {
+                return Q(userId);
+            })
             .fin(function() {
                 client.done();
-                return Q(userId)
             });
     }
 };
