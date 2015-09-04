@@ -25,8 +25,8 @@ router.post('/login', function(req, res) {
     userDataSource.auth(req.body.username, req.body.password)
         .then(function(userId) {
             if (userId) {
-                res.session.user_id = userId;
-                response.redirect('/home');
+                req.session.user_id = userId;
+                res.redirect('/home');
             } else {
                 res.render('pages/login', {
                     errors: ['Username or password is incorrect. Please try again.']
