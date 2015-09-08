@@ -20,8 +20,13 @@
             <div class="event-list">
                 <% events.forEach(function(event){ %> 
                     <div class="event-list-item">
-                        <%= event.name %>
-                        <%= event.start %>
+                        <div>
+                            <%= event.name %>
+                        </div>
+                        <div>
+                            <%= event.startDateFormatted %> 
+                            <%= event.startTimeFormatted %>
+                        </div>
                     </div>
                 <%}) %>
             </div>

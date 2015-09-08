@@ -18,11 +18,19 @@
 
 .page-home {
     .event-list {
+        display: table;
+        width: 100%;
+
         .event-list-item {
             border-bottom: 1px solid #CCC;
+            display: table-row;
 
             &:last-child {
                 border-bottom: 0;
+            }
+
+            & > div {
+                display: table-cell;
             }
         }
     }
