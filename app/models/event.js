@@ -1,3 +1,4 @@
+'use strict';
 
 function EventModel(event) {
     this.id = event.id;
