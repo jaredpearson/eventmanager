@@ -49,7 +49,7 @@ module.exports = {
                 return Q(c);
             })
             .then(function() {
-                return client.query('INSERT INTO Events (event_name, description, start, created_by, owner) VALUES ($1::TEXT, $2::TEXT, to_timestamp($3::BIGINT), $4::INTEGER, $5::INTEGER) RETURNING events_id', [name, description, start.valueOf(), createdBy, createdBy]);
+                return client.query('INSERT INTO Events (event_name, description, start, created_by, owner) VALUES ($1::TEXT, $2::TEXT, to_timestamp($3::BIGINT), $4::INTEGER, $5::INTEGER) RETURNING events_id', [name, description, start.unix(), createdBy, createdBy]);
             })
             .then(function(result) {
                 if (result.rowCount > 0) {
