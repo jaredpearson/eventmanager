@@ -29,6 +29,7 @@
     "grunt-contrib-clean": "^0.6.0",
     "grunt-contrib-copy": "^0.8.1",
     "grunt-contrib-less": "^1.0.1",
-    "grunt-mkdir": "^0.1.2"
+    "grunt-mkdir": "^0.1.2",
+    "pg-simple-migrate": "git+ssh://git@bitbucket.org/jaredpearson/pg-simple-migrate.git#1.0.0"
   }
 }
