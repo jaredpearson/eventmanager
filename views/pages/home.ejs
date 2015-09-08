@@ -4,18 +4,27 @@
     <title>Event Manager</title>
     <% include ../partials/header.ejs %>
 </head>
-<body>
-    <div class="container">
-        <h2>Upcomping Events</h2>
-        <div>
-            <a href="/events/new">New Event</a>
+<body class="page-home">
+    <div class="navbar navbar-default navbar-dark" role="navigation">
+        <div class="container">
+            <a href="/home" class="navbar-brand">EventManager</a>
+            <ul class="nav navbar-nav"></ul>
         </div>
-        <div>
-            <% events.forEach(function(event){ %> 
-                <div>
-                    <%= event.name %>
-                </div>
-            <%}) %>
+    </div>
+    <div class="content">
+        <div class="container">
+            <h2>Upcoming Events</h2>
+            <div>
+                <a href="/events/new" class="btn btn-default" role="button">New Event</a>
+            </div>
+            <div class="event-list">
+                <% events.forEach(function(event){ %> 
+                    <div class="event-list-item">
+                        <%= event.name %>
+                        <%= event.start %>
+                    </div>
+                <%}) %>
+            </div>
         </div>
     </div>
 </body>
