@@ -2,15 +2,10 @@
 
 var db = require('../db'),
     Q = require('q'),
-    moment = require('moment');
-
-function isInt(value) {
-    if (isNaN(value)) {
-        return false;
-    }
-    var x = parseFloat(value);
-    return (x | 0) === x;
-}
+    moment = require('moment'),
+    util = require('../util'),
+    EventModel = require('../models/event'),
+    UserModel = require('../models/user');
 
 function UserCache() {
     this.usersById = {};
@@ -20,7 +15,7 @@ UserCache.prototype.findById = function(id) {
 }
 UserCache.prototype.put = function(id, user) {
     if (id && user) {
-        this.usersById[id] = user;
+        this.usersById[id] = new UserModel(user);
     }
 }
 UserCache.prototype.getOrPut = function(id, user) {
@@ -31,6 +26,50 @@ UserCache.prototype.getOrPut = function(id, user) {
         this.put(id, user);
         return user;
     }
+}
+
+function eventQueryResultToEventArray(results) {
+    var events = [],
+        userCache = new UserCache();
+
+    // transform the row in to a hierarchy of objects
+    results.rows.forEach(function(eventData) {
+        var event = eventQueryRowToEvent(eventData, userCache);
+        events.push(event);
+    });
+
+    return Q(events);
+}
+
+function eventQueryRowToEvent(eventData, userCache) {
+    var ownerUser,
+        createdByUser;
+
+    if (eventData.owner) {
+        ownerUser = userCache.getOrPut(eventData.owner, {
+            id: eventData.owner,
+            firstName: eventData.owner_first_name,
+            lastName: eventData.owner_last_name
+        });
+    }
+
+    if (eventData.created_by) {
+        createdByUser = userCache.getOrPut(eventData.created_by, {
+            id: eventData.created_by,
+            firstName: eventData.created_by_first_name,
+            lastName: eventData.created_by_last_name
+        });
+    }
+
+    return new EventModel({
+        id: eventData.events_id,
+        name: eventData.event_name,
+        owner: ownerUser,
+        start: moment(eventData.start),
+        description: eventData.description,
+        created: moment(eventData.created),
+        createdBy: createdByUser
+    });
 }
 
 module.exports = {
@@ -68,7 +107,7 @@ module.exports = {
         var client,
             limitClean;
 
-        limitClean = isInt(limit) ? limit : 10;
+        limitClean = util.isInt(limit) ? limit : 10;
 
         return db.connect()
             .then(function(c) {
@@ -79,41 +118,37 @@ module.exports = {
                 return client.query('SELECT e.events_id, e.event_name, e.owner, ou.first_name owner_first_name, ou.last_name owner_last_name, e.start, e.description, e.created, e.created_by, cu.first_name created_by_first_name, cu.last_name created_by_last_name FROM Events e LEFT OUTER JOIN Users ou ON e.owner = ou.users_id LEFT OUTER JOIN Users cu ON e.created_by = cu.users_id ORDER BY e.created DESC, e.events_id LIMIT ' + limitClean);
             })
             .then(function(results) {
-                var events = [],
-                    userCache = new UserCache();
+                return eventQueryResultToEventArray(results);
+            })
+            .fin(function() {
+                client.done();
+            });
+    },
 
-                // transform the row in to a hierarchy of objects
-                results.rows.forEach(function(eventData) {
-                    var ownerUser,
-                        createdByUser;
+    findEventById: function(eventId) {
+        var client;
 
-                    if (eventData.owner) {
-                        ownerUser = userCache.getOrPut(eventData.owner, {
-                            id: eventData.owner,
-                            firstName: eventData.owner_first_name,
-                            lastName: eventData.owner_last_name
-                        });
-                    }
+        if (!util.isInt(eventId)) {
+            return Q.reject('Invalid event ID. An event ID is a number');
+        }
 
-                    if (eventData.created_by) {
-                        createdByUser = userCache.getOrPut(eventData.created_by, {
-                            id: eventData.created_by,
-                            firstName: eventData.created_by_first_name,
-                            lastName: eventData.created_by_last_name
-                        });
-                    }
-
-                    events.push({
-                        id: eventData.events_id,
-                        name: eventData.event_name,
-                        owner: ownerUser,
-                        start: moment(eventData.start),
-                        description: eventData.description,
-                        created: moment(eventData.created),
-                        createdBy: createdByUser
-                    });
-                })
-                return Q(events);
+        return db.connect()
+            .then(function(c) {
+                client = c;
+                return Q(c);
+            })
+            .then(function() {
+                return client.query('SELECT e.events_id, e.event_name, e.owner, ou.first_name owner_first_name, ou.last_name owner_last_name, e.start, e.description, e.created, e.created_by, cu.first_name created_by_first_name, cu.last_name created_by_last_name FROM Events e LEFT OUTER JOIN Users ou ON e.owner = ou.users_id LEFT OUTER JOIN Users cu ON e.created_by = cu.users_id WHERE e.events_id = $1::INTEGER LIMIT 1', [eventId]);
+            })
+            .then(function(results) {
+                return eventQueryResultToEventArray(results);
+            })
+            .then(function(events) {
+                if (events && events.length > 0) {
+                    return Q(events[0]);
+                } else {
+                    return Q(undefined);
+                }
             })
             .fin(function() {
                 client.done();

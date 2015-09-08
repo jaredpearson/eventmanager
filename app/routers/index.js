@@ -6,5 +6,6 @@ router.use(require('./default').router);
 router.use(require('./login').router);
 router.use(require('./home').router);
 router.use(require('./events_new').router);
+router.use(require('./events_eventid').router);
 
 module.exports.router = router;

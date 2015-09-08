@@ -50,7 +50,7 @@ router.post('/events/new', auth, function(req, res) {
 
             if (eventId) {
                 console.log('Event saved: ' + eventId);
-                res.redirect('/home');
+                res.redirect('/events/' + eventId);
             } else {
                 pageModel.errors = ['Unable to save the event'];
                 res.render('pages/event_new', pageModel);

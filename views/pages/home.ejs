@@ -5,12 +5,7 @@
     <% include ../partials/header.ejs %>
 </head>
 <body class="page-home">
-    <div class="navbar navbar-default navbar-dark" role="navigation">
-        <div class="container">
-            <a href="/home" class="navbar-brand">EventManager</a>
-            <ul class="nav navbar-nav"></ul>
-        </div>
-    </div>
+    <% include ../partials/navbar.ejs %>
     <div class="content">
         <div class="container">
             <h2>Upcoming Events</h2>
@@ -21,7 +16,7 @@
                 <% events.forEach(function(event){ %> 
                     <div class="event-list-item">
                         <div>
-                            <%= event.name %>
+                            <a href="/events/<%= event.id %>"><%= event.name %></a>
                         </div>
                         <div>
                             <%= event.startDateFormatted %> 
