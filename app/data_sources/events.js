@@ -1,7 +1,8 @@
 'use strict';
 
 var db = require('../db'),
-    Q = require('q');
+    Q = require('q'),
+    moment = require('moment');
 
 function isInt(value) {
     if (isNaN(value)) {
@@ -106,9 +107,9 @@ module.exports = {
                         id: eventData.events_id,
                         name: eventData.event_name,
                         owner: ownerUser,
-                        start: eventData.start,
+                        start: moment(eventData.start),
                         description: eventData.description,
-                        created: eventData.created,
+                        created: moment(eventData.created),
                         createdBy: createdByUser
                     });
                 })
