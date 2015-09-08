@@ -22,7 +22,8 @@
     "express-session": "^1.11.3",
     "moment": "^2.10.6",
     "pg": "^4.4.1",
-    "q": "^1.4.1"
+    "q": "^1.4.1",
+    "underscore": "^1.8.3"
   },
   "devDependencies": {
     "grunt": "^0.4.5",

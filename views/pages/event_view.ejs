@@ -16,6 +16,11 @@
                         <%= event.startTimeFormatted %>
                     </div>
                 </div>
+                <% if (event.descriptionHtml) { %>
+                    <div class="description">
+                        <%- event.descriptionHtml %>
+                    </div>
+                <% } %>
             </div>
             <div class="col-md-4"></div>
         </div>
