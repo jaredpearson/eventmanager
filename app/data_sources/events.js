@@ -7,6 +7,23 @@ var db = require('../db'),
     EventModel = require('../models/event'),
     UserModel = require('../models/user');
 
+var standardSelectSql = 'SELECT e.events_id, ' + 
+                        'e.event_name, ' + 
+                        'e.owner, ' + 
+                        'ou.first_name owner_first_name, ' + 
+                        'ou.last_name owner_last_name, ' + 
+                        'e.start, ' + 
+                        'e.description, ' + 
+                        'e.created, ' + 
+                        'e.created_by, ' + 
+                        'cu.first_name created_by_first_name, ' + 
+                        'cu.last_name created_by_last_name, ' + 
+                        'r.registrations_id ' + 
+                        'FROM Events e ' + 
+                        'LEFT OUTER JOIN Users ou ON e.owner = ou.users_id ' +
+                        'LEFT OUTER JOIN Users cu ON e.created_by = cu.users_id ' +
+                        'LEFT OUTER JOIN Registrations r ON e.events_id = r.event_id '; 
+
 function UserCache() {
     this.usersById = {};
 }
@@ -43,7 +60,8 @@ function eventQueryResultToEventArray(results) {
 
 function eventQueryRowToEvent(eventData, userCache) {
     var ownerUser,
-        createdByUser;
+        createdByUser,
+        myRegistration;
 
     if (eventData.owner) {
         ownerUser = userCache.getOrPut(eventData.owner, {
@@ -61,6 +79,12 @@ function eventQueryRowToEvent(eventData, userCache) {
         });
     }
 
+    if (eventData.registrations_id) {
+        myRegistration = {
+            id: eventData.registrations_id
+        };
+    }
+
     return new EventModel({
         id: eventData.events_id,
         name: eventData.event_name,
@@ -68,7 +92,8 @@ function eventQueryRowToEvent(eventData, userCache) {
         start: moment(eventData.start),
         description: eventData.description,
         created: moment(eventData.created),
-        createdBy: createdByUser
+        createdBy: createdByUser,
+        myRegistration: myRegistration
     });
 }
 
@@ -103,7 +128,7 @@ module.exports = {
             });
     },
 
-    getNewestEvents: function(limit) {
+    getNewestEvents: function(contextUserId, limit) {
         var client,
             limitClean;
 
@@ -115,7 +140,7 @@ module.exports = {
                 return Q(c);
             })
             .then(function() {
-                return client.query('SELECT e.events_id, e.event_name, e.owner, ou.first_name owner_first_name, ou.last_name owner_last_name, e.start, e.description, e.created, e.created_by, cu.first_name created_by_first_name, cu.last_name created_by_last_name FROM Events e LEFT OUTER JOIN Users ou ON e.owner = ou.users_id LEFT OUTER JOIN Users cu ON e.created_by = cu.users_id ORDER BY e.created DESC, e.events_id LIMIT ' + limitClean);
+                return client.query(standardSelectSql + ' WHERE (r.user_id IS NULL OR r.user_id = $1::INTEGER) ORDER BY e.created DESC, e.events_id LIMIT ' + limitClean, [contextUserId]);
             })
             .then(function(results) {
                 return eventQueryResultToEventArray(results);
@@ -125,7 +150,7 @@ module.exports = {
             });
     },
 
-    findEventById: function(eventId) {
+    findEventById: function(contextUserId, eventId) {
         var client;
 
         if (!util.isInt(eventId)) {
@@ -138,7 +163,7 @@ module.exports = {
                 return Q(c);
             })
             .then(function() {
-                return client.query('SELECT e.events_id, e.event_name, e.owner, ou.first_name owner_first_name, ou.last_name owner_last_name, e.start, e.description, e.created, e.created_by, cu.first_name created_by_first_name, cu.last_name created_by_last_name FROM Events e LEFT OUTER JOIN Users ou ON e.owner = ou.users_id LEFT OUTER JOIN Users cu ON e.created_by = cu.users_id WHERE e.events_id = $1::INTEGER LIMIT 1', [eventId]);
+                return client.query(standardSelectSql + ' WHERE (r.user_id IS NULL OR r.user_id = $1::INTEGER) AND e.events_id = $2::INTEGER LIMIT 1', [contextUserId, eventId]);
             })
             .then(function(results) {
                 return eventQueryResultToEventArray(results);

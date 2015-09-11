@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Event Manager</title>
-    <% include ../partials/header.ejs %>
+<title>Event Manager</title>
+<% include ../partials/header.ejs %>
 </head>
 <body class="page-home">
     <% include ../partials/navbar.ejs %>
@@ -22,8 +22,47 @@
                     </div>
                 <% } %>
             </div>
-            <div class="col-md-4"></div>
+            <div class="col-md-4">
+                <div class="rsvp-container">
+                    <div id="attending_question" class="<%= hasRegistration ? 'hidden' : 'show' %>">
+                        <h2>Will you attend?</h2>
+                        <a href="#" id="attend_yes" class="btn btn-default" role="button">Yes</a>
+                    </div>
+                    <div id="attending_confirmed" class="<%= hasRegistration ? 'show' : 'hidden' %>">
+                        <h2>Your RSVP</h2>
+                        <div>Attending</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+<script>
+
+$(document).on('click', 'a#attend_yes', function(e) {
+    e.preventDefault();
+
+    $.ajax('/services/registrations', {
+        method: 'POST',
+        dataType: 'json',
+        data: {
+            eventId: <%= event.id %>
+        }
+    })
+    .done(function(data, status, xhr) {
+        if (xhr.status === 200) {
+            $('#attending_question').addClass('hidden').removeClass('show');
+            $('#attending_confirmed').addClass('show').removeClass('hidden');
+        } else {
+            alert('Registration failed. Please try again');
+            console.log(data);
+        }
+    })
+    .fail(function(xhr, status, err) {
+        alert('Registration failed. Please try again');
+        console.log(arguments);
+    });
+});
+
+</script>
 </body>
 </html>

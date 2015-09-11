@@ -11,12 +11,15 @@ router.get('/events/:eventId', auth, function(req, res) {
         res.sendStatus(404);
         return;
     }
+    var contextUserId = req.session.user_id;
 
-    eventsDataSource.findEventById(eventId)
+    eventsDataSource.findEventById(contextUserId, eventId)
         .then(function(event) {
             if (event) {
                 res.render('pages/event_view', {
-                    event: event
+                    event: event,
+                    myRegistration: event.myRegistration,
+                    hasRegistration: typeof event.myRegistration !== 'undefined'
                 });
             } else {
                 res.sendStatus(404);
