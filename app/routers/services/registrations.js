@@ -10,7 +10,8 @@ router.post('/services/registrations', auth, function(req, res) {
     }
 
     var eventId, 
-        userId;
+        userId, 
+        attending;
 
     if (req.body.userId) {
         userId = req.body.userId;
@@ -32,6 +33,18 @@ router.post('/services/registrations', auth, function(req, res) {
         });
     }
 
+    if (typeof req.body.attending !== 'undefined' && req.body.attending !== true && req.body.attending !== false) {
+        return res.status(400).json({
+            success: false,
+            error: 'attending must either be true or false.'
+        });
+    }
+    if (req.body.attending === true) {
+        attending = true;
+    } else {
+        attending = false;
+    }
+
     registrationDataSource.findRegistrationByEventIdAndUserId(eventId, userId)
         .then(function(registration) {
             if (registration) {
@@ -42,8 +55,8 @@ router.post('/services/registrations', auth, function(req, res) {
                 });
 
             } else {
-                
-                return registrationDataSource.createRegistration(eventId, userId, req.session.user_id)
+
+                return registrationDataSource.createRegistration(eventId, userId, req.session.user_id, attending)
                     .then(function(registrationId) {
                         if (registrationId) {
                             return registrationDataSource.findRegistrationById(registrationId)

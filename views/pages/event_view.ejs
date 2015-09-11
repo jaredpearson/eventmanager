@@ -27,10 +27,12 @@
                     <div id="attending_question" class="<%= hasRegistration ? 'hidden' : 'show' %>">
                         <h2>Will you attend?</h2>
                         <a href="#" id="attend_yes" class="btn btn-default" role="button">Yes</a>
+                        <a href="#" id="attend_no" class="btn btn-default" role="button">No</a>
                     </div>
                     <div id="attending_confirmed" class="<%= hasRegistration ? 'show' : 'hidden' %>">
                         <h2>Your RSVP</h2>
-                        <div>Attending</div>
+                        <div id="attending_confirmed_yes" class="<%= myRegistration && myRegistration.attending ? 'show' : 'hidden' %>">Yes</div>
+                        <div id="attending_confirmed_no" class="<%= myRegistration && myRegistration.attending ? 'hidden' : 'show' %>">No</div>
                     </div>
                 </div>
             </div>
@@ -38,20 +40,27 @@
     </div>
 <script>
 
-$(document).on('click', 'a#attend_yes', function(e) {
-    e.preventDefault();
-
+function sendRegistrationAndRender(attending) {
     $.ajax('/services/registrations', {
         method: 'POST',
         dataType: 'json',
-        data: {
-            eventId: <%= event.id %>
-        }
+        contentType: 'application/json; charset=utf-8',
+        data: JSON.stringify({
+            eventId: <%= event.id %>,
+            attending: attending
+        })
     })
     .done(function(data, status, xhr) {
         if (xhr.status === 200) {
             $('#attending_question').addClass('hidden').removeClass('show');
             $('#attending_confirmed').addClass('show').removeClass('hidden');
+            if (attending) {
+                $('#attending_confirmed_yes').addClass('show').removeClass('hidden');
+                $('#attending_confirmed_no').addClass('hidden').removeClass('show');
+            } else {
+                $('#attending_confirmed_yes').addClass('hidden').removeClass('show');
+                $('#attending_confirmed_no').addClass('show').removeClass('hidden');
+            }
         } else {
             alert('Registration failed. Please try again');
             console.log(data);
@@ -61,6 +70,15 @@ $(document).on('click', 'a#attend_yes', function(e) {
         alert('Registration failed. Please try again');
         console.log(arguments);
     });
+}
+
+$(document).on('click', 'a#attend_yes', function(e) {
+    e.preventDefault();
+    sendRegistrationAndRender(true);
+});
+$(document).on('click', 'a#attend_no', function(e) {
+    e.preventDefault();
+    sendRegistrationAndRender(false);
 });
 
 </script>

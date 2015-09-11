@@ -18,7 +18,8 @@ var standardSelectSql = 'SELECT e.events_id, ' +
                         'e.created_by, ' + 
                         'cu.first_name created_by_first_name, ' + 
                         'cu.last_name created_by_last_name, ' + 
-                        'r.registrations_id ' + 
+                        'r.registrations_id, ' + 
+                        'r.attending ' +
                         'FROM Events e ' + 
                         'LEFT OUTER JOIN Users ou ON e.owner = ou.users_id ' +
                         'LEFT OUTER JOIN Users cu ON e.created_by = cu.users_id ' +
@@ -81,7 +82,8 @@ function eventQueryRowToEvent(eventData, userCache) {
 
     if (eventData.registrations_id) {
         myRegistration = {
-            id: eventData.registrations_id
+            id: eventData.registrations_id,
+            attending: eventData.attending
         };
     }
 
