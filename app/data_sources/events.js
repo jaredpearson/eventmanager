@@ -7,23 +7,45 @@ var db = require('../db'),
     EventModel = require('../models/event'),
     UserModel = require('../models/user');
 
-var standardSelectSql = 'SELECT e.events_id, ' + 
-                        'e.event_name, ' + 
-                        'e.owner, ' + 
-                        'ou.first_name owner_first_name, ' + 
-                        'ou.last_name owner_last_name, ' + 
-                        'e.start, ' + 
-                        'e.description, ' + 
-                        'e.created, ' + 
-                        'e.created_by, ' + 
-                        'cu.first_name created_by_first_name, ' + 
-                        'cu.last_name created_by_last_name, ' + 
-                        'r.registrations_id, ' + 
+var findByIdSql =       'SELECT e.events_id, ' +
+                        'e.event_name, ' +
+                        'e.owner, ' +
+                        'ou.first_name owner_first_name, ' +
+                        'ou.last_name owner_last_name, ' +
+                        'e.start, ' +
+                        'e.description, ' +
+                        'e.created, ' +
+                        'e.created_by, ' +
+                        'cu.first_name created_by_first_name, ' +
+                        'cu.last_name created_by_last_name, ' +
+                        'r.registrations_id, ' +
                         'r.attending ' +
-                        'FROM Events e ' + 
+                        'FROM Events e ' +
                         'LEFT OUTER JOIN Users ou ON e.owner = ou.users_id ' +
                         'LEFT OUTER JOIN Users cu ON e.created_by = cu.users_id ' +
-                        'LEFT OUTER JOIN Registrations r ON e.events_id = r.event_id '; 
+                        'LEFT OUTER JOIN (SELECT r.* FROM Registrations r WHERE r.user_id = $1::INTEGER) r ON e.events_id = r.event_id ' +
+                        'WHERE e.events_id = $2::INTEGER ' + 
+                        'LIMIT 1'; 
+
+var top10NewestSql =    'SELECT e.events_id, ' +
+                        'e.event_name, ' +
+                        'e.owner, ' +
+                        'ou.first_name owner_first_name, ' +
+                        'ou.last_name owner_last_name, ' +
+                        'e.start, ' +
+                        'e.description, ' +
+                        'e.created, ' +
+                        'e.created_by, ' +
+                        'cu.first_name created_by_first_name, ' +
+                        'cu.last_name created_by_last_name, ' +
+                        'r.registrations_id, ' +
+                        'r.attending ' +
+                        'FROM (SELECT e.* FROM Events e ORDER BY e.created DESC, e.events_id LIMIT 10) e ' +
+                        'LEFT OUTER JOIN Users ou ON e.owner = ou.users_id ' +
+                        'LEFT OUTER JOIN Users cu ON e.created_by = cu.users_id ' +
+                        'LEFT OUTER JOIN (SELECT r.* FROM Registrations r WHERE r.user_id = $1::INTEGER) r ON e.events_id = r.event_id ' +
+                        'ORDER BY e.created DESC, e.events_id ' +
+                        'LIMIT 10';
 
 function UserCache() {
     this.usersById = {};
@@ -116,7 +138,11 @@ module.exports = {
                 return Q(c);
             })
             .then(function() {
-                return client.query('INSERT INTO Events (event_name, description, start, created_by, owner) VALUES ($1::TEXT, $2::TEXT, to_timestamp($3::BIGINT), $4::INTEGER, $5::INTEGER) RETURNING events_id', [name, description, start.unix(), createdBy, createdBy]);
+                return client.query({
+                    name: 'event_insert',
+                    text: 'INSERT INTO Events (event_name, description, start, created_by, owner) VALUES ($1::TEXT, $2::TEXT, to_timestamp($3::BIGINT), $4::INTEGER, $5::INTEGER) RETURNING events_id',
+                    values: [name, description, start.unix(), createdBy, createdBy]
+                });
             })
             .then(function(result) {
                 if (result.rowCount > 0) {
@@ -130,11 +156,8 @@ module.exports = {
             });
     },
 
-    getNewestEvents: function(contextUserId, limit) {
-        var client,
-            limitClean;
-
-        limitClean = util.isInt(limit) ? limit : 10;
+    getNewestEvents: function(contextUserId) {
+        var client;
 
         return db.connect()
             .then(function(c) {
@@ -142,7 +165,11 @@ module.exports = {
                 return Q(c);
             })
             .then(function() {
-                return client.query(standardSelectSql + ' WHERE (r.user_id IS NULL OR r.user_id = $1::INTEGER) ORDER BY e.created DESC, e.events_id LIMIT ' + limitClean, [contextUserId]);
+                return client.query({
+                    name: 'event_top_10',
+                    text: top10NewestSql,
+                    values: [contextUserId]
+                });
             })
             .then(function(results) {
                 return eventQueryResultToEventArray(results);
@@ -165,7 +192,11 @@ module.exports = {
                 return Q(c);
             })
             .then(function() {
-                return client.query(standardSelectSql + ' WHERE (r.user_id IS NULL OR r.user_id = $1::INTEGER) AND e.events_id = $2::INTEGER LIMIT 1', [contextUserId, eventId]);
+                return client.query({
+                    name: 'event_find_by_id',
+                    text: findByIdSql,
+                    values: [contextUserId, eventId]
+                });
             })
             .then(function(results) {
                 return eventQueryResultToEventArray(results);
