@@ -1,0 +1,68 @@
+<% 
+function renderPagination(pagination) {
+    if (pagination) { %>
+        <ul class="pagination">
+
+            <% if (pagination.previousAction) { %>
+                <li><a href="<%= pagination.previousAction.url %>" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a></li>
+            <% } else { %>
+                <li class="disabled"><span aria-hidden="true">&laquo;</span></li>
+            <% } %>
+
+            <% pagination.actions.forEach(function(page) { %>
+                <% if (page.active) { %>
+                    <li class="active"><span><%= page.label %></span></li>
+                <% } else { %>
+                    <li><a href="<%= page.url %>"><%= page.label %></a></li>
+                <% } %>
+            <% }) %>
+
+            <% if (pagination.nextAction) { %>
+                <li><a href="<%= pagination.nextAction.url %>" aria-label="Next"><span aria-hidden="true">&raquo;</span></a></li>
+            <% } else { %>
+                <li class="disabled"><span aria-hidden="true">&raquo;</span></li>
+            <% } %>
+
+        </ul>
+    <% }
+}
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Event Manager</title>
+<% include ../partials/header.ejs %>
+</head>
+<body class="page-home">
+    <% include ../partials/navbar.ejs %>
+    <div class="content container">
+        <h2 id="page-title"><%= event.name %> Registrations</h2>
+        <div id="event-registrations-container">
+            <% if (totalRegistrations > 0) { %>
+
+                <% renderPagination(pagination) %>
+
+                <table class="table table-condensed">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Attending</th>
+                        </tr>
+                    </thead>
+                    <% registrations.forEach(function(registration) { %>
+                        <tr>
+                            <td><%= registration.user ? registration.user.name : '' %></td>
+                            <td><%= registration.attending ? 'Yes' : 'No' %></td>
+                        </tr>
+                    <% }) %>
+                </table>
+
+                <% renderPagination(pagination) %>
+
+            <% } else { %>
+                No registrations yet.
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>

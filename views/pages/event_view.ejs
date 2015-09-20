@@ -9,18 +9,35 @@
     <div class="content container">
         <div class="row">
             <div class="col-md-8">
-                <h2><%= event.name %></h2>
+                <h2 id="page-title"><%= event.name %></h2>
                 <div>
-                    <%= event.startFullDateFormatted %> 
-                    <div>
+                    <span id="event-start-date"><%= event.startFullDateFormatted %></span>
+                    <div id="event-start-time">
                         <%= event.startTimeFormatted %>
                     </div>
                 </div>
                 <% if (event.descriptionHtml) { %>
-                    <div class="description">
+                    <div id="event-description" class="description">
                         <%- event.descriptionHtml %>
                     </div>
                 <% } %>
+                <div>
+                    <h3>Attending</h3>
+                    <div id="event-registrations-container">
+                        <% if (registrations.length > 0) { %>
+                            <% registrations.forEach(function(registration) { %>
+                                <div>
+                                    <%= registration.user ? registration.user.name : '' %>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            No attendees yet.
+                        <% } %>
+                    </div>
+                    <% if (totalRegistrations > 0) { %>
+                        <div><a href="/events/<%= event.id %>/registrations">View All <%= totalRegistrations %> Registrations</a></div>
+                    <% } %>
+                </div>
             </div>
             <div class="col-md-4">
                 <div class="rsvp-container">
