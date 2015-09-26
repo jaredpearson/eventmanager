@@ -58,7 +58,7 @@ router.get('/events/:eventId/registrations', auth, function(req, res) {
     var offset = parseInt(req.query.offset, 10) || 0;
 
     // if offset is not correct, just continue with 0
-    if (!_.isNumber(offset) || !_.isFinite(offset)) {
+    if (!_.isNumber(offset) || !_.isFinite(offset) || offset < 0) {
         offset = 0;
     }
 

@@ -85,12 +85,18 @@ module.exports = {
 
         offset = offset || 0;
         if (!_.isNumber(offset) || !_.isFinite(offset) || offset == NaN) {
-            throw new Error('Offset value is not a valid number. ' + offset);
+            throw new Error('Offset value is not a valid number. \nactual:' + offset);
+        }
+        if (offset < 0) {
+            throw new Error('Offset must not be negative. \nactual: ' + offset);
         }
 
         limit = limit || 0;
         if (!_.isNumber(limit) || !_.isFinite(limit) || limit == NaN) {
-            throw new Error('Limit value is not a valid number. ' + limit);
+            throw new Error('Limit value is not a valid number. \nactual: ' + limit);
+        }
+        if (limit <= 0) {
+            throw new Error('Limit must be greater than 1. \nactual: ' + limit);
         }
 
         return db.connect()
