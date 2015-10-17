@@ -44,6 +44,7 @@ var top10NewestSql =    'SELECT e.events_id, ' +
                         'LEFT OUTER JOIN Users ou ON e.owner = ou.users_id ' +
                         'LEFT OUTER JOIN Users cu ON e.created_by = cu.users_id ' +
                         'LEFT OUTER JOIN (SELECT r.* FROM Registrations r WHERE r.user_id = $1::INTEGER) r ON e.events_id = r.event_id ' +
+                        'WHERE e.start >= CURRENT_TIMESTAMP ' +
                         'ORDER BY e.created DESC, e.events_id ' +
                         'LIMIT 10';
 
