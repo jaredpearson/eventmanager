@@ -33,7 +33,7 @@ module.exports = {
             })
             .then(function(){
                 if (!userId) {
-                    return Q(undefined);
+                    return client.query('UPDATE Users SET login_attempts = login_attempts + 1 WHERE username = $1::TEXT', [username]);
                 }
 
                 return client.query('UPDATE Users SET login_attempts = 0, login_lock_timestamp = NULL, last_login = CURRENT_TIMESTAMP, number_of_logins = number_of_logins + 1 WHERE users_id = $1::INTEGER', [userId])
