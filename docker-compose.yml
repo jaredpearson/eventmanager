@@ -1,11 +1,10 @@
 
 postgres:
-  build: .
-  dockerfile: Dockerfile.postgres
+  build: postgres
   environment:
     - PGDATA=/var/lib/postgresql/data/pgdata
   env_file:
-    - ./postgres.env
+    - ./postgres/postgres.env
   volumes_from:
     - postgres-data
 
@@ -15,8 +14,7 @@ postgres-data:
     - /var/lib/postgresql/data
 
 webapp:
-  build: .
-  dockerfile: Dockerfile.webapp
+  build: webapp
   ports:
     - "8289:8289"
   environment:
@@ -25,4 +23,4 @@ webapp:
   links:
     - postgres:postgres
   volumes:
-    - './views:/usr/src/app/views'
+    - './webapp/views:/usr/src/app/views'

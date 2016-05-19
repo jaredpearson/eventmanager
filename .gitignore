@@ -1,4 +1,5 @@
-/node_modules
-/npm-debug.log
-/dist
-/posgres.env
+/postgres/postgres.env
+
+/webapp/npm-debug.log
+/webapp/dist
+/webapp/node_modules
