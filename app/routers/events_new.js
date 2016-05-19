@@ -3,7 +3,8 @@
 var router = require('express').Router(),
     auth = require('../middlewares/auth'),
     eventsDataSource = require('../data_sources/events'),
-    moment = require('moment');
+    moment = require('moment'),
+    ui = require('../ui');
 
 router.get('/events/new', auth, function(req, res) {
     res.render('pages/event_new')
@@ -58,8 +59,7 @@ router.post('/events/new', auth, function(req, res) {
 
         })
         .fail(function(err) {
-            console.error(err);
-            res.render('pages/unexpected_error');
+            ui.showErrorPage(res, err);
         })
         .done();
 

@@ -6,7 +6,8 @@ var router = require('express').Router(),
     Q = require('q'),
     _ = require('underscore'),
     eventsDataSource = require('../data_sources/events'),
-    registrationsDataSource = require('../data_sources/registration');
+    registrationsDataSource = require('../data_sources/registration'),
+    ui = require('../ui');
 
 function buildPagination(urlBuilderFn, total, size, offset) {
     var numberOfPages = Math.ceil(total / size);
@@ -96,8 +97,7 @@ router.get('/events/:eventId/registrations', auth, function(req, res) {
             }
         })
         .fail(function(err) {
-            console.error(err);
-            res.render('pages/unexpected_error');
+            ui.showErrorPage(res, err);
         })
         .done();
 });

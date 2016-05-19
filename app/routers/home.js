@@ -2,7 +2,8 @@
 
 var router = require('express').Router(),
     auth = require('../middlewares/auth'),
-    eventsDataSource = require('../data_sources/events')
+    eventsDataSource = require('../data_sources/events'),
+    ui = require('../ui');
 
 router.get('/home', auth, function(req, res) {
     var contextUserId = req.session.user_id;
@@ -14,8 +15,7 @@ router.get('/home', auth, function(req, res) {
             });
         })
         .fail(function(err) {
-            console.error(err);
-            res.render('pages/unexpected_error');
+            ui.showErrorPage(res, err);
         })
         .done();
 

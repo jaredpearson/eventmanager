@@ -5,7 +5,8 @@ var router = require('express').Router(),
     util = require('../util'),
     Q = require('q'),
     eventsDataSource = require('../data_sources/events'),
-    registrationsDataSource = require('../data_sources/registration');
+    registrationsDataSource = require('../data_sources/registration'),
+    ui = require('../ui');
 
 function EventViewModel(event, registrations) {
     this.event = event;
@@ -50,8 +51,7 @@ router.get('/events/:eventId', auth, function(req, res) {
             }
         })
         .fail(function(err) {
-            console.error(err);
-            res.render('pages/unexpected_error');
+            ui.showErrorPage(res, err);
         })
         .done();
 });

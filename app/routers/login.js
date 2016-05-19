@@ -1,7 +1,8 @@
 'use strict';
 
 var router = require('express').Router(),
-    userDataSource = require('../data_sources/users');
+    userDataSource = require('../data_sources/users'),
+    ui = require('../ui');
 
 router.get('/login', function(req, res) {
     res.render('pages/login');
@@ -34,8 +35,7 @@ router.post('/login', function(req, res) {
             }
         })
         .fail(function(err) {
-            console.warn(err);
-            res.render('pages/unexpected_error');
+            ui.showErrorPage(res, err);
         })
         .done();
 });
