@@ -1,5 +1,19 @@
 
+CREATE DATABASE eventmanager;
+\connect eventmanager;
+begin transaction;
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE USER webapp PASSWORD 'eventmAnager@!$';
+GRANT CONNECT ON DATABASE eventmanager TO webapp;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO webapp;
+
+CREATE TABLE migrations (
+    migration_id SERIAL,
+    name TEXT NOT NULL,
+    executed_on timestamp DEFAULT now()
+);
 
 CREATE TABLE Users (
     users_id SERIAL PRIMARY KEY,
@@ -15,6 +29,7 @@ CREATE TABLE Users (
     number_of_logins SMALLINT DEFAULT 0,
     welcome_key TEXT UNIQUE
 );
+GRANT all on Users to webapp;
 
 CREATE TABLE Events (
     events_id SERIAL PRIMARY KEY,
@@ -25,6 +40,7 @@ CREATE TABLE Events (
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by INTEGER REFERENCES Users(users_id)
 );
+GRANT all on Events to webapp;
 
 CREATE TABLE Registrations (
     registrations_id SERIAL PRIMARY KEY,
@@ -33,3 +49,7 @@ CREATE TABLE Registrations (
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by INTEGER REFERENCES Users(users_id)
 );
+GRANT all on Registrations to webapp;
+
+INSERT INTO migrations(name) VALUES ('v001__initial.sql');
+end transaction;

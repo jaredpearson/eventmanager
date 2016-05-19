@@ -7,7 +7,7 @@ var express = require('express'),
 
 var app = express();
 
-app.set('port', (process.env.PORT || 5000));
+app.set('port', (process.env.HTTP_PORT || 5000));
 
 app.use(express.static(path.join(__dirname, 'dist', 'public')));
 app.use(bodyParser.json());

@@ -1,0 +1,26 @@
+
+postgres:
+  build: .
+  dockerfile: Dockerfile.postgres
+  environment:
+    - PGDATA=/var/lib/postgresql/data/pgdata
+  env_file:
+    - ./postgres.env
+
+postgres-data:
+  image: busybox:1.24.1
+  volumes:
+    - /var/lib/postgresql/data
+
+webapp:
+  build: .
+  dockerfile: Dockerfile.webapp
+  ports:
+    - "8289:8289"
+  environment:
+    - HTTP_PORT=8289
+    - DATABASE_URL=postgres://webapp:eventmAnager@!$$@postgres/eventmanager
+  links:
+    - postgres:postgres
+  volumes:
+    - './views:/usr/src/app/views'
