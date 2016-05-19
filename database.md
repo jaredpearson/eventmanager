@@ -14,3 +14,7 @@ Before running any of the following commands, the environment variable needs to 
 Running `psql` on the database
 
     docker-compose exec postgres psql -U $POSTGRES_USER eventmanager
+
+Running a migration against the database
+
+    docker exec -i "$(docker-compose ps -q postgres)" psql -U $POSTGRES_USER -f - eventmanager < ./sql/v006___admin_user.sql

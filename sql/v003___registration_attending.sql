@@ -1,4 +1,3 @@
-CREATE DATABASE eventmanager;
 \connect eventmanager;
 begin transaction;
 
