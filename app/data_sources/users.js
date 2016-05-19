@@ -45,7 +45,9 @@ module.exports = {
                 return Q(userId);
             })
             .fin(function() {
-                client.done();
+                if (client) {
+                    client.done();
+                }
             });
     },
 
@@ -70,7 +72,9 @@ module.exports = {
                 return client.query('COMMIT');
             })
             .fin(function() {
-                client.done();
+                if (client) {
+                    client.done();
+                }
             })
     }
 };

@@ -75,7 +75,9 @@ module.exports = {
                 }
             })
             .fin(function() {
-                client.done();
+                if (client) {
+                    client.done();
+                }
             });
     },
 
@@ -139,7 +141,9 @@ module.exports = {
                 return Q(new RegistrationQueryResult(registrations, totalRegistrations));
             })
             .fin(function() {
-                client.done();
+                if (client) {
+                    client.done();
+                }
             });
     },
 
@@ -187,7 +191,9 @@ module.exports = {
                 return Q(new RegistrationQueryResult(registrations, totalRegistrations));
             })
             .fin(function() {
-                client.done();
+                if (client) {
+                    client.done();
+                }
             });
     },
 
@@ -231,7 +237,9 @@ module.exports = {
                 }
             })
             .fin(function() {
-                client.done();
+                if (client) {
+                    client.done();
+                }
             });
     }
 

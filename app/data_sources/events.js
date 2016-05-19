@@ -153,7 +153,9 @@ module.exports = {
                 }
             })
             .fin(function() {
-                client.done();
+                if (client) {
+                    client.done();
+                }
             });
     },
 
@@ -176,7 +178,9 @@ module.exports = {
                 return eventQueryResultToEventArray(results);
             })
             .fin(function() {
-                client.done();
+                if (client) {
+                    client.done();
+                }
             });
     },
 
@@ -210,7 +214,9 @@ module.exports = {
                 }
             })
             .fin(function() {
-                client.done();
+                if (client) {
+                    client.done();
+                }
             });
     }
 };
