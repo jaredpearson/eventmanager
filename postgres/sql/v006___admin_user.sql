@@ -6,7 +6,9 @@ INSERT INTO Users (
     password
 ) VALUES (
     'admin@tablemanager.com',
-    crypt('123456', gen_salt('bf', 11))
+    crypt('123456', gen_salt('bf', 11)),
+    'Admin',
+    'User'
 );
 
 INSERT INTO migrations(name) VALUES ('v006___admin_user.sql');
