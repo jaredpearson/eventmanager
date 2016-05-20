@@ -3,7 +3,9 @@ begin transaction;
 
 INSERT INTO Users (
     username,
-    password
+    password,
+    first_name,
+    last_name
 ) VALUES (
     'admin@tablemanager.com',
     crypt('123456', gen_salt('bf', 11)),
