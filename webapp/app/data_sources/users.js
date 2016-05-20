@@ -1,12 +1,9 @@
 'use strict';
 
-var db = require('../db'),
-    Q = require('q');
+var db = require('../db');
 
 module.exports = {
-    getMaxUsernameLength: function() {
-        return 100;
-    },
+    getMaxUsernameLength: () => 100,
 
     auth: function(username, password) {
         var client,
@@ -22,14 +19,14 @@ module.exports = {
             })
             .then(function(result) {
                 if (result.rowCount > 0) {
-                    return Q(result.rows[0].users_id);
+                    return result.rows[0].users_id;
                 } else {
-                    return Q(undefined);
+                    return undefined;
                 }
             })
             .then(function(selectedUserId) {
                 userId = selectedUserId;
-                return Q(selectedUserId);
+                return selectedUserId;
             })
             .then(function(){
                 if (!userId) {
@@ -42,7 +39,7 @@ module.exports = {
                 return client.query('COMMIT');
             })
             .then(function() {
-                return Q(userId);
+                return userId;
             })
             .fin(function() {
                 if (client) {
@@ -52,29 +49,13 @@ module.exports = {
     },
 
     createUser: function(username, password, email, firstName, lastName) {
-        var client;
-        return db.connect()
-            .then(function(c) {
-                client = c;
-                return client.query('BEGIN');
-            })
-            .then(function() {
-                return client.query('INSERT INTO Users (username, password, email, first_name, last_name) VALUES ($1::TEXT, crypt($2::TEXT, gen_salt(\'bf\', 11)), $3::TEXT, $4::TEXT, $5::TEXT) RETURNING users_id', [username, password, email, firstName, lastName]);
-            })
-            .then(function(result) {
+        return db.query('INSERT INTO Users (username, password, email, first_name, last_name) VALUES ($1::TEXT, crypt($2::TEXT, gen_salt(\'bf\', 11)), $3::TEXT, $4::TEXT, $5::TEXT) RETURNING users_id', [username, password, email, firstName, lastName])
+            .then((result) => {
                 if (result.rowCount > 0) {
-                    return Q(result.rows[0].users_id);
+                    return result.rows[0].users_id;
                 } else {
-                    return Q(undefined);
+                    return undefined;
                 }
-            })
-            .then(function() {
-                return client.query('COMMIT');
-            })
-            .fin(function() {
-                if (client) {
-                    client.done();
-                }
-            })
+            });
     }
 };

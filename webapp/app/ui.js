@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-    showErrorPage: function(res, err) {
+    showErrorPage(res, err) {
         if (err.stack) {
             console.log(err.stack);
         } else {

@@ -2,7 +2,7 @@
 
 module.exports = {
 
-    isInt: function(value) {
+    isInt(value) {
         if (isNaN(value)) {
             return false;
         }

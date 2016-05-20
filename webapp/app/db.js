@@ -1,30 +1,42 @@
 'use strict';
 
-var pg = require('pg'),
-    Q = require('q'),
-    pgconnect = Q.nbind(pg.connect, pg);
+const pg = require('pg');
+const Q = require('q');
+const pgconnect = Q.nbind(pg.connect, pg);
 
-if (!process.env.DATABASE_URL) {
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
     console.error('DATABASE_URL environment variable expected');
     process.exit(1);
 }
 
-function Client(pgclient, pgdone) {
-    this._pgclient = pgclient;
-    this._pgdone = pgdone;
+class Client{
+    constructor(pgclient, pgdone) {
+        this._pgclient = pgclient;
+        this._pgdone = pgdone;
 
-    // create a promise version of the pg Client.query method
-    this.query = Q.nbind(pgclient.query, pgclient);
+        // create a promise version of the pg Client.query method
+        this.query = Q.nbind(pgclient.query, pgclient);
+    }
+    done() {
+        this._pgdone(this._pgclient);
+    }
 }
-Client.prototype.done = function() {
-    this._pgdone(this._pgclient);
-};
 
 module.exports = {
-    connect: function(){
-        return pgconnect(process.env.DATABASE_URL)
+    connect() {
+        return pgconnect(connectionString)
             .spread(function(client, done) {
                 return Q(new Client(client, done));
             });
+    },
+    query() {
+        const thatArgs = arguments;
+        return this.connect()
+            .then((client) => {
+                return client.query.apply(this, thatArgs)
+                    .fin(() => client.done());
+            });
     }
-}
+};

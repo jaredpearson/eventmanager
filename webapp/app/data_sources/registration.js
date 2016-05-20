@@ -1,14 +1,15 @@
 'use strict';
 
-var Q = require('q'),
-    db = require('../db'),
+var db = require('../db'),
     UserModel = require('../models/user'),
     _ = require('underscore');
 
-var RegistrationQueryResult = function(registrations, totalCount) {
-    this.registrations = registrations;
-    this.totalCount = totalCount;
-    this.hasMoreRegistrations = this.registrations.length > totalCount;
+class RegistrationQueryResult {
+    constructor(registrations, totalCount) {
+        this.registrations = registrations;
+        this.totalCount = totalCount;
+        this.hasMoreRegistrations = this.registrations.length > totalCount;
+    }
 }
 
 // gets the total number of registrations for the specified event. the event ID 
@@ -21,19 +22,16 @@ function getTotalNumberOfRegistrations(client, eventId) {
             values: [eventId]
         })
         .then(function(result) {
-            var totalRegistrations;
             if (result.rowCount > 0) {
-                totalRegistrations = result.rows[0].count;
+                return result.rows[0].count;
             } else {
-                totalRegistrations = 0;
+                return 0;
             }
-            return Q(totalRegistrations);
         });
 }
 
 function createRegistrationsArrayFromQueryResult(result) {
-    var registrations = [];
-    result.rows.forEach(function(row) {
+    return result.rows.map(function(row) {
         var user;
 
         if (row.user_id) {
@@ -45,43 +43,29 @@ function createRegistrationsArrayFromQueryResult(result) {
             });
         }
 
-        registrations.push({
+        return {
             id: row.registrations_id,
             eventId: row.event_id,
             user: user,
             attending: row.attending
-        });
+        };
     });
-    return registrations;
 }
 
 module.exports = {
 
-    createRegistration: function(eventId, userId, contextUserId, attending) {
-        var client;
-        return db.connect()
-            .then(function(c) {
-                client = c;
-                return Q(c);
-            })
-            .then(function() {
-                return client.query('INSERT INTO Registrations (event_id, user_id, created_by, attending) VALUES ($1::INTEGER, $2::INTEGER, $3::INTEGER, $4::BOOLEAN) RETURNING registrations_id', [eventId, userId, contextUserId, attending]);
-            })
-            .then(function(result) {
+    createRegistration(eventId, userId, contextUserId, attending) {
+        return db.query('INSERT INTO Registrations (event_id, user_id, created_by, attending) VALUES ($1::INTEGER, $2::INTEGER, $3::INTEGER, $4::BOOLEAN) RETURNING registrations_id', [eventId, userId, contextUserId, attending])
+            .then((result) => {
                 if (result.rowCount > 0) {
-                    return Q(result.rows[0].registrations_id);
+                    return result.rows[0].registrations_id;
                 } else {
-                    return Q(undefined);
-                }
-            })
-            .fin(function() {
-                if (client) {
-                    client.done();
+                    return undefined;
                 }
             });
     },
 
-    findRegistrationsForEvent: function(contextUserId, eventId, limit, offset) {
+    findRegistrationsForEvent(contextUserId, eventId, limit, offset) {
         var client;
         var totalRegistrations;
 
@@ -104,41 +88,41 @@ module.exports = {
         return db.connect()
             .then(function(c) {
                 client = c;
-                return Q(c);
+                return c;
             })
             .then(function() {
                 return getTotalNumberOfRegistrations(client, eventId);
             })
             .then(function(totalRegistrationsResult) {
                 totalRegistrations = totalRegistrationsResult;
-                return Q(totalRegistrations);
+                return totalRegistrations;
             })
             .then(function() {
                 return client.query({
                     name: 'registration_find_for_event',
-                    text: 'SELECT ' +
-                          'r.registrations_id, ' +
-                          'r.event_id, ' +
-                          'r.user_id, ' + 
-                          'r.created, ' +
-                          'r.created_by createdBy, ' +
-                          'r.attending, ' +
-                          'u.first_name user_first_name, ' +
-                          'u.last_name user_last_name ' +
-                          'FROM Registrations r ' +
-                          'JOIN Users u ON r.user_id = u.users_id ' +
-                          'WHERE r.event_id = $1::INTEGER ' +
-                          'ORDER BY r.created, r.registrations_id ' + 
-                          'LIMIT 100 ' + 
-                          'OFFSET ' + offset,
+                    text: `SELECT
+                          r.registrations_id,
+                          r.event_id,
+                          r.user_id,
+                          r.created,
+                          r.created_by createdBy,
+                          r.attending,
+                          u.first_name user_first_name,
+                          u.last_name user_last_name
+                          FROM Registrations r
+                          JOIN Users u ON r.user_id = u.users_id
+                          WHERE r.event_id = $1::INTEGER
+                          ORDER BY r.created, r.registrations_id 
+                          LIMIT 100 
+                          OFFSET ${offset}`,
                     values: [eventId]
                 });
             })
             .then(function(result) {
-                return Q(createRegistrationsArrayFromQueryResult(result));
+                return createRegistrationsArrayFromQueryResult(result);
             })
             .then(function(registrations) {
-                return Q(new RegistrationQueryResult(registrations, totalRegistrations));
+                return new RegistrationQueryResult(registrations, totalRegistrations);
             })
             .fin(function() {
                 if (client) {
@@ -154,41 +138,41 @@ module.exports = {
         return db.connect()
             .then(function(c) {
                 client = c;
-                return Q(c);
+                return c;
             })
             .then(function() {
                 return getTotalNumberOfRegistrations(client, eventId);
             })
             .then(function(totalRegistrationsResult) {
                 totalRegistrations = totalRegistrationsResult;
-                return Q(totalRegistrations);
+                return totalRegistrations;
             })
             .then(function() {
                 return client.query({
                     name: 'registration_find_for_event',
-                    text: 'SELECT ' +
-                          'r.registrations_id, ' +
-                          'r.event_id, ' +
-                          'r.user_id, ' + 
-                          'r.created, ' +
-                          'r.created_by createdBy, ' +
-                          'r.attending, ' +
-                          'u.first_name user_first_name, ' +
-                          'u.last_name user_last_name ' +
-                          'FROM Registrations r ' +
-                          'JOIN Users u ON r.user_id = u.users_id ' +
-                          'WHERE r.event_id = $1::INTEGER ' +
-                          'AND r.attending = true ' +
-                          'ORDER BY r.created, r.registrations_id ' + 
-                          'LIMIT 100',
+                    text: `SELECT
+                          r.registrations_id,
+                          r.event_id,
+                          r.user_id,
+                          r.created,
+                          r.created_by createdBy,
+                          r.attending,
+                          u.first_name user_first_name,
+                          u.last_name user_last_name
+                          FROM Registrations r
+                          JOIN Users u ON r.user_id = u.users_id
+                          WHERE r.event_id = $1::INTEGER
+                          AND r.attending = true
+                          ORDER BY r.created, r.registrations_id 
+                          LIMIT 100`,
                     values: [eventId]
                 });
             })
             .then(function(result) {
-                return Q(createRegistrationsArrayFromQueryResult(result));
+                return createRegistrationsArrayFromQueryResult(result);
             })
             .then(function(registrations) {
-                return Q(new RegistrationQueryResult(registrations, totalRegistrations));
+                return new RegistrationQueryResult(registrations, totalRegistrations);
             })
             .fin(function() {
                 if (client) {
@@ -199,46 +183,23 @@ module.exports = {
 
     findRegistrationByEventIdAndUserId: function(eventId, userId) {
         var client;
-        return db.connect()
-            .then(function(c) {
-                client = c;
-                return Q(c);
-            })
-            .then(function() {
-                return client.query('SELECT registrations_id id, event_id eventId, user_id userId, created, created_by createdBy, attending FROM Registrations WHERE event_id = $1::INTEGER AND user_id = $2::INTEGER', [eventId, userId])
-            })
+        return db.query('SELECT registrations_id id, event_id eventId, user_id userId, created, created_by createdBy, attending FROM Registrations WHERE event_id = $1::INTEGER AND user_id = $2::INTEGER', [eventId, userId])
             .then(function(result) {
                 if (result.rowCount > 0) {
-                    return Q(result.rows[0]);
+                    return result.rows[0];
                 } else {
-                    return Q(undefined);
+                    return undefined;
                 }
-            })
-            .fin(function() {
-                client.done();
             });
     },
 
     findRegistrationById: function(registrationId) {
-        var client;
-        return db.connect()
-            .then(function(c) {
-                client = c;
-                return Q(c);
-            })
-            .then(function() {
-                return client.query('SELECT registrations_id id, event_id eventId, user_id userId, created, created_by createdBy, attending FROM Registrations WHERE registrations_id = $1::INTEGER', [registrationId])
-            })
+        return db.query('SELECT registrations_id id, event_id eventId, user_id userId, created, created_by createdBy, attending FROM Registrations WHERE registrations_id = $1::INTEGER', [registrationId])
             .then(function(result) {
                 if (result.rowCount > 0) {
-                    return Q(result.rows[0]);
+                    return result.rows[0];
                 } else {
-                    return Q(undefined);
-                }
-            })
-            .fin(function() {
-                if (client) {
-                    client.done();
+                    return undefined;
                 }
             });
     }
