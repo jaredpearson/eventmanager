@@ -3,7 +3,7 @@
 var router = require('express').Router(),
     auth = require('../middlewares/auth'),
     eventsDataSource = require('../data_sources/events'),
-    moment = require('moment'),
+    moment = require('moment-timezone'),
     ui = require('../ui');
 
 router.get('/events/new', auth, function(req, res) {
@@ -43,7 +43,8 @@ router.post('/events/new', auth, function(req, res) {
     }
 
     // attempt to parse the date/time specified by the user
-    parsedStartDate = moment(pageModel.start);
+    // TODO: assume the user is in PST
+    parsedStartDate = moment.tz(pageModel.start, 'America/Los_Angeles');
     parsedDescription = (pageModel.description) ? pageModel.description.trim() : undefined;
 
     eventsDataSource.createEvent(pageModel.name.trim(), parsedDescription, parsedStartDate, req.session.user_id)
