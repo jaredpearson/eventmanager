@@ -26,7 +26,7 @@ const findByIdSql =     `SELECT e.events_id,
                          WHERE e.events_id = $2::INTEGER 
                          LIMIT 1`; 
 
-const top10NewestSql =  `SELECT e.events_id,
+const top10UpcomingSql =  `SELECT e.events_id,
                          e.event_name,
                          e.owner,
                          ou.first_name owner_first_name,
@@ -39,12 +39,12 @@ const top10NewestSql =  `SELECT e.events_id,
                          cu.last_name created_by_last_name,
                          r.registrations_id,
                          r.attending
-                         FROM (SELECT e.* FROM Events e ORDER BY e.created DESC, e.events_id) e
+                         FROM (SELECT e.* FROM Events e ORDER BY e.start ASC, e.events_id) e
                          LEFT OUTER JOIN Users ou ON e.owner = ou.users_id
                          LEFT OUTER JOIN Users cu ON e.created_by = cu.users_id
                          LEFT OUTER JOIN (SELECT r.* FROM Registrations r WHERE r.user_id = $1::INTEGER) r ON e.events_id = r.event_id
                          WHERE e.start >= CURRENT_TIMESTAMP
-                         ORDER BY e.created DESC, e.events_id
+                         ORDER BY e.start ASC, e.events_id
                          LIMIT 10`;
 
 class UserCache {
@@ -160,10 +160,10 @@ module.exports = {
             });
     },
 
-    getNewestEvents(contextUserId) {
+    getUpcomingEvents(contextUserId) {
         return db.query({
                 name: 'event_top_10',
-                text: top10NewestSql,
+                text: top10UpcomingSql,
                 values: [contextUserId]
             })
             .then((results) => {

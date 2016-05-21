@@ -8,7 +8,7 @@ var router = require('express').Router(),
 router.get('/home', auth, function(req, res) {
     var contextUserId = req.session.user_id;
 
-    eventsDataSource.getNewestEvents(contextUserId)
+    eventsDataSource.getUpcomingEvents(contextUserId)
         .then(function(events) {
             res.render('pages/home', {
                 events: events
