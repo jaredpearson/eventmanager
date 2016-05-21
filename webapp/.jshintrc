@@ -1,0 +1,10 @@
+{
+    "esversion": 6,
+    "node": true,
+    "bitwise": true,
+    "curly": true,
+    "eqeqeq": true,
+    "notypeof": true,
+    "undef": true,
+    "unused": true
+}
