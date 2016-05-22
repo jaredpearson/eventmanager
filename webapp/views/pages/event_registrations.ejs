@@ -37,6 +37,7 @@ function renderPagination(pagination) {
     <% include ../partials/navbar.ejs %>
     <div class="content container">
         <h2 id="page-title"><%= event.name %> Registrations</h2>
+        <div><a href="/events/<%= event.id %>">Event Details</a></div>
         <div id="event-registrations-container">
             <% if (totalRegistrations > 0) { %>
 
