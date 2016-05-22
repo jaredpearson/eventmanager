@@ -50,6 +50,7 @@
                         <h2>Your RSVP</h2>
                         <div id="attending_confirmed_yes" class="<%= myRegistration && myRegistration.attending ? 'show' : 'hidden' %>">Yes</div>
                         <div id="attending_confirmed_no" class="<%= myRegistration && myRegistration.attending ? 'hidden' : 'show' %>">No</div>
+                        <div style="font-size: 0.9em; padding-top: 1em;"><a href="#" id="attending_change">Change</a>
                     </div>
                 </div>
             </div>
@@ -57,36 +58,84 @@
     </div>
 <script>
 
+var eventData = {
+    myRegistration: <%- event && event.myRegistration ? JSON.stringify(event.myRegistration) : "null" %>
+}
+var state = {
+    showRsvpForm: !eventData.myRegistration
+};
+function updateView() {
+    if (state.showRsvpForm) {
+        $('#attending_question').addClass('show').removeClass('hidden');
+        $('#attending_confirmed').addClass('hidden').removeClass('show');
+    } else {
+        $('#attending_question').addClass('hidden').removeClass('show');
+        $('#attending_confirmed').addClass('show').removeClass('hidden');
+    }
+    
+    if (eventData.myRegistration && eventData.myRegistration.attending) {
+        $('#attending_confirmed_yes').addClass('show').removeClass('hidden');
+        $('#attending_confirmed_no').addClass('hidden').removeClass('show');
+        $('#attend_yes').addClass('btn-success');
+        $('#attend_no').removeClass('btn-success');
+    } else {
+        $('#attending_confirmed_yes').addClass('hidden').removeClass('show');
+        $('#attending_confirmed_no').addClass('show').removeClass('hidden');
+        $('#attend_yes').removeClass('btn-success');
+        $('#attend_no').addClass('btn-success');
+    }
+    
+}
 function sendRegistrationAndRender(attending) {
-    $.ajax('/services/registrations', {
-        method: 'POST',
-        dataType: 'json',
-        contentType: 'application/json; charset=utf-8',
-        data: JSON.stringify({
-            eventId: <%= event.id %>,
-            attending: attending
-        })
-    })
-    .done(function(data, status, xhr) {
-        if (xhr.status === 200) {
-            $('#attending_question').addClass('hidden').removeClass('show');
-            $('#attending_confirmed').addClass('show').removeClass('hidden');
-            if (attending) {
-                $('#attending_confirmed_yes').addClass('show').removeClass('hidden');
-                $('#attending_confirmed_no').addClass('hidden').removeClass('show');
-            } else {
-                $('#attending_confirmed_yes').addClass('hidden').removeClass('show');
-                $('#attending_confirmed_no').addClass('show').removeClass('hidden');
-            }
-        } else {
-            alert('Registration failed. Please try again');
-            console.log(data);
-        }
-    })
-    .fail(function(xhr, status, err) {
-        alert('Registration failed. Please try again');
-        console.log(arguments);
-    });
+    if (!eventData.myRegistration) {
+        // if no registration yet, create one
+        $.ajax('/services/registrations', {
+                method: 'POST',
+                dataType: 'json',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify({
+                    eventId: <%= event.id %>,
+                    attending: attending
+                })
+            })
+            .done(function(data, status, xhr) {
+                if (xhr.status === 200) {
+                    eventData.myRegistration = data;
+                    state.showRsvpForm = false;
+                    updateView();
+                } else {
+                    alert('Registration failed. Please try again');
+                    console.log(data);
+                }
+            })
+            .fail(function(xhr, status, err) {
+                alert('Registration failed. Please try again');
+                console.log(arguments);
+            });
+    } else {
+        $.ajax('/services/registrations/' + eventData.myRegistration.id, {
+                method: 'PATCH',
+                dataType: 'json',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify({
+                    attending: attending
+                })
+            })
+            .done(function(data, status, xhr) {
+                if (xhr.status === 200) {
+                    eventData.myRegistration.attending = attending;
+                    state.showRsvpForm = false;
+                    updateView();
+                } else {
+                    alert('Registration failed. Please try again');
+                    console.log(data);
+                }
+            })
+            .fail(function(xhr, status, err) {
+                alert('Registration failed. Please try again');
+                console.log(arguments);
+            });
+    }
 }
 
 $(document).on('click', 'a#attend_yes', function(e) {
@@ -97,6 +146,11 @@ $(document).on('click', 'a#attend_no', function(e) {
     e.preventDefault();
     sendRegistrationAndRender(false);
 });
+$(document).on('click', 'a#attending_change', function(e) {
+    e.preventDefault();
+    state.showRsvpForm = true;
+    updateView();
+})
 
 </script>
 </body>

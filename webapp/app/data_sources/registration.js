@@ -202,6 +202,16 @@ module.exports = {
                     return undefined;
                 }
             });
-    }
+    },
 
+    updateAttending(registrationId, attending) {
+        return db.query('UPDATE Registrations SET attending = $2::BOOLEAN WHERE registrations_id = $1::INTEGER RETURNING registrations_id', [registrationId, attending])
+            .then((result) => {
+                if (result.rowCount > 0) {
+                    return result.rows[0];
+                } else {
+                    return undefined;
+                }
+            });
+    }
 };
