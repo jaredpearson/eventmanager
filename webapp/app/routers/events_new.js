@@ -7,7 +7,17 @@ var router = require('express').Router(),
     ui = require('../ui');
 
 router.get('/events/new', auth, function(req, res) {
-    res.render('pages/event_new')
+
+    const defaultStart = moment()
+        .add(7, 'days')
+        .hour(19)
+        .minute(0)
+        .second(0)
+        .milliseconds(0);
+
+    res.render('pages/event_new', {
+        start: defaultStart.format('YYYY-MM-DDTHH:mm:ss')
+    })
 });
 
 router.post('/events/new', auth, function(req, res) {
