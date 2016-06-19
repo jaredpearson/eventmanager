@@ -5,6 +5,7 @@ const moment = require('moment-timezone');
 const util = require('../util');
 const EventModel = require('../models/event');
 const UserModel = require('../models/user');
+const Q = require('q');
 
 const findByIdSql =     `SELECT e.events_id,
                          e.event_name,

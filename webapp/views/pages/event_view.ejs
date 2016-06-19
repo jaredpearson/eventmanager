@@ -24,8 +24,8 @@
                 <div>
                     <h3>Attending</h3>
                     <div id="event-registrations-container">
-                        <% if (registrations.length > 0) { %>
-                            <% registrations.forEach(function(registration) { %>
+                        <% if (attending.length > 0) { %>
+                            <% attending.forEach(function(registration) { %>
                                 <div>
                                     <%= registration.user ? registration.user.name : '' %>
                                 </div>
