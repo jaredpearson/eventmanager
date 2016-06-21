@@ -57,7 +57,7 @@
         </div>
     </div>
 <script>
-
+var sessionId = '<%- sessionId %>';
 var eventData = {
     myRegistration: <%- event && event.myRegistration ? JSON.stringify(event.myRegistration) : "null" %>
 }
@@ -96,7 +96,10 @@ function sendRegistrationAndRender(attending) {
                 data: JSON.stringify({
                     eventId: <%= event.id %>,
                     attending: attending
-                })
+                }),
+                headers: {
+                    'Authorization': 'Bearer ' + sessionId
+                }
             })
             .done(function(data, status, xhr) {
                 if (xhr.status === 200) {
@@ -119,7 +122,10 @@ function sendRegistrationAndRender(attending) {
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify({
                     attending: attending
-                })
+                }),
+                headers: {
+                    'Authorization': 'Bearer ' + sessionId
+                }
             })
             .done(function(data, status, xhr) {
                 if (xhr.status === 200) {

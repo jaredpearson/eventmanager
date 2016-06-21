@@ -4,7 +4,8 @@ const router = require('express').Router(),
     auth = require('../middlewares/auth'),
     util = require('../util'),
     eventService = require('../services/event_service'),
-    ui = require('../ui');
+    ui = require('../ui'),
+    session = require('../session');
 
 router.get('/events/:eventId', auth, (req, res) => {
     const eventId = req.params.eventId;
@@ -17,7 +18,14 @@ router.get('/events/:eventId', auth, (req, res) => {
     eventService.findEventAndRegistrations(contextUserId, eventId)
         .then((eventAndRegistration) => {
             if (eventAndRegistration) {
-                res.render('pages/event_view', eventAndRegistration);
+                res.render('pages/event_view', Object.assign(
+                    {},
+                    eventAndRegistration,
+                    {
+                        // TODO: generate a single token on login instead of each page view
+                        sessionId: session.generateSessionToken({id: contextUserId})
+                    }
+                ));
             } else {
                 res.sendStatus(404);
             }

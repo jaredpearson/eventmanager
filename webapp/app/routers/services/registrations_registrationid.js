@@ -1,11 +1,11 @@
 'use strict';
 
 const router = require('express').Router();
-const auth = require('../../middlewares/auth');
+const auth = require('../../middlewares/restAuth');
 const util = require('../../util');
 const registrationDataSource = require('../../data_sources/registration');
 
-router.patch('/services/registrations/:registrationId', (req, res) => {
+router.patch('/services/registrations/:registrationId', auth, (req, res) => {
     const registrationId = req.params.registrationId;
     if (!registrationId || !util.isInt(registrationId)) {
         res.sendStatus(404);
