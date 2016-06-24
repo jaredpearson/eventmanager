@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Event Manager</title>
+    <% include ../../../partials/header.ejs %>
+</head>
+<body>
+    <% include ../../../partials/navbar.ejs %>
+    <div class="container">
+        <h2>Users</h2>
+        <table class="table">
+            <% users.forEach(function(user) { %>
+            <tr>
+                <td><a href="/setup/users/<%= user.id %>"><%= user.name %></a></td>
+            </tr>
+            <% }); %>
+        </table>
+    </div>
+</body>
+</html>
