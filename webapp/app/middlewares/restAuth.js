@@ -1,6 +1,7 @@
 'use strict';
 
 const session = require('../session');
+const usersDataSource = require('../data_sources/users');
 
 module.exports = (req, res, next) => {
     const authHeader = req.get('Authorization');
@@ -22,13 +23,29 @@ module.exports = (req, res, next) => {
             res.sendStatus(403);
             return;
         } else {
-            req.session.user_id = tokenObj.userId;
+
+            const userId = tokenObj.userId;
+            usersDataSource.getUserById(userId)
+                .then((user) => {
+                    if (user) {
+                        req.user = user;
+                        req.session.user_id = user.id;
+                        next();
+
+                    } else {
+                        res.sendStatus(403);
+                    }
+                })
+                .fail((err) => {
+                    console.log(err);
+                    res.sendStatus(403);
+                })
+                .done();
+
         }
     } catch(e) {
         console.log(e);
         res.sendStatus(403);
         return;
     }
-
-    next();
 };

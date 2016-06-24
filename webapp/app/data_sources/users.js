@@ -61,7 +61,7 @@ module.exports = {
             });
     },
 
-    getUserForView(userId) {
+    getUserById(userId) {
         return db.query(`
             SELECT
                 users_id id,

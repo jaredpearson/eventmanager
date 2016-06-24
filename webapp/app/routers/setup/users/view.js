@@ -14,7 +14,7 @@ router.get('/setup/users/:userId', auth, (req, res) => {
     }
     const contextUserId = req.session.user_id;
 
-    usersDataSource.getUserForView(userId)
+    usersDataSource.getUserById(userId)
         .then((user) => {
             if (!user) {
                 res.sendStatus(404);
