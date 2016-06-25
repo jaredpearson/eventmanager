@@ -7,7 +7,7 @@ const usersDataSource = require('../../../data_sources/users');
 const ui = require('../../../ui');
 const util = require('../../../util');
 
-router.get('/setup/users/:userId', auth(), hasPerm('manageUser'), (req, res) => {
+router.get('/setup/users/:userId', auth(), hasPerm('manageUsers'), (req, res) => {
     const userId = req.params.userId;
     if (!userId || !util.isInt(userId)) {
         res.sendStatus(404);
