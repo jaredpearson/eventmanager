@@ -73,7 +73,8 @@ module.exports = {
                 login_attempts,
                 login_lock_timestamp,
                 last_login,
-                number_of_logins
+                number_of_logins,
+                perm_manage_users
             FROM Users
             WHERE users_id = $1::INTEGER
             LIMIT 1`, [userId])
@@ -92,7 +93,10 @@ module.exports = {
                         loginAttempts: userData.login_attempts,
                         loginLock: moment.tz(userData.login_lock_timestamp, 'Etc/GMT+0').tz(timezone),
                         lastLogin: moment.tz(userData.last_login, 'Etc/GMT+0').tz(timezone),
-                        numberOfLogins: userData.number_of_logins
+                        numberOfLogins: userData.number_of_logins,
+                        perms: {
+                            manageUsers: userData.perm_manage_users
+                        }
                     };
                 } else {
                     return;

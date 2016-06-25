@@ -46,7 +46,7 @@ function createRegistrationPageUrl(eventId, offset) {
     return '/events/' + eventId + '/registrations?offset=' + offset;
 }
 
-router.get('/events/:eventId/registrations', auth, function(req, res) {
+router.get('/events/:eventId/registrations', auth(), function(req, res) {
     var eventId = req.params.eventId;
     if (!eventId || !util.isInt(eventId)) {
         res.sendStatus(404);

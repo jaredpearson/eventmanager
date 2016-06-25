@@ -7,7 +7,7 @@ const router = require('express').Router(),
     ui = require('../ui'),
     session = require('../session');
 
-router.get('/events/:eventId', auth, (req, res) => {
+router.get('/events/:eventId', auth(), (req, res) => {
     const eventId = req.params.eventId;
     if (!eventId || !util.isInt(eventId)) {
         res.sendStatus(404);

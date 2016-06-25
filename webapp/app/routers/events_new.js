@@ -6,7 +6,7 @@ var router = require('express').Router(),
     moment = require('moment-timezone'),
     ui = require('../ui');
 
-router.get('/events/new', auth, function(req, res) {
+router.get('/events/new', auth(), function(req, res) {
 
     const defaultStart = moment()
         .add(7, 'days')
@@ -20,7 +20,7 @@ router.get('/events/new', auth, function(req, res) {
     })
 });
 
-router.post('/events/new', auth, function(req, res) {
+router.post('/events/new', auth(), function(req, res) {
     var errors = [];
     var parsedStartDate;
     var parsedDescription;

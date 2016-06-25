@@ -5,7 +5,7 @@ var router = require('express').Router(),
     eventsDataSource = require('../data_sources/events'),
     ui = require('../ui');
 
-router.get('/home', auth, function(req, res) {
+router.get('/home', auth(), function(req, res) {
     var contextUserId = req.session.user_id;
 
     eventsDataSource.getUpcomingEvents(contextUserId)

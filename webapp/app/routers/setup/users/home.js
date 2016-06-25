@@ -2,10 +2,11 @@
 
 const router = require('express').Router();
 const auth = require('../../../middlewares/auth');
+const hasPerm = require('../../../middlewares/hasPerm');
 const usersDataSource = require('../../../data_sources/users');
 const ui = require('../../../ui');
 
-router.get('/setup/users', auth, (req, res) => {
+router.get('/setup/users', auth(), hasPerm('manageUsers'), (req, res) => {
 
     usersDataSource.getPageOfUsers()
         .then((userPage) => {

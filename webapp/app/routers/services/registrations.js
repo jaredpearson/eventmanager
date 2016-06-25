@@ -4,7 +4,7 @@ var router = require('express').Router(),
     auth = require('../../middlewares/restAuth'),
     registrationDataSource = require('../../data_sources/registration');
 
-router.post('/services/registrations', auth, function(req, res) {
+router.post('/services/registrations', auth(), function(req, res) {
     if(!req.body) {
         return res.sendStatus(400);
     }
