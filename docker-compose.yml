@@ -1,26 +1,27 @@
+version: '2'
 
-postgres:
-  build: postgres
-  environment:
-    - PGDATA=/var/lib/postgresql/data/pgdata
-  env_file:
-    - ./postgres/postgres.env
-  volumes_from:
-    - postgres-data
+services:
+  postgres:
+    build: postgres
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    env_file:
+      - ./postgres/postgres.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
 
-postgres-data:
-  image: busybox:1.24.1
-  volumes:
-    - /var/lib/postgresql/data
+  webapp:
+    build: webapp
+    ports:
+      - "8289:8289"
+    environment:
+      - HTTP_PORT=8289
+      - DATABASE_URL=postgres://webapp:eventmAnager@!$$@postgres/eventmanager
+    links:
+      - postgres:postgres
+    volumes:
+      - ./webapp/views:/usr/src/app/views
 
-webapp:
-  build: webapp
-  ports:
-    - "8289:8289"
-  environment:
-    - HTTP_PORT=8289
-    - DATABASE_URL=postgres://webapp:eventmAnager@!$$@postgres/eventmanager
-  links:
-    - postgres:postgres
-  volumes:
-    - './webapp/views:/usr/src/app/views'
+volumes:
+  postgres-data:
+    driver: local
