@@ -8,7 +8,7 @@
     <% include ../partials/navbar.ejs %>
     <div class="content container">
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-xs-12 col-md-8">
                 <h2 id="page-title"><%= event.name %></h2>
                 <div>
                     <span id="event-start-date"><%= event.startFullDateFormatted %></span>
@@ -39,7 +39,7 @@
                     <% } %>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-xs-12 col-md-4">
                 <div class="rsvp-container">
                     <div id="attending_question" class="<%= hasRegistration ? 'hidden' : 'show' %>">
                         <h2>Will you attend?</h2>
