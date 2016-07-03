@@ -60,6 +60,13 @@ class UserCache {
             this.usersById[id] = new UserModel(user);
         }
     }
+
+    /**
+     * Gets the value for the given ID from cache. If the value isn't in cache
+     * yet, the object is stored at the specified ID and returned.
+     * @param id the ID of the user
+     * @param user the object to be stored in cache
+     */
     getOrPut(id, user) {
         var found = this.findById(id);
         if (found) {
@@ -71,19 +78,25 @@ class UserCache {
     }
 }
 
+/**
+ * Converts the query results from the findByIdSql query into an array of 
+ * events.
+ * @param results the results from executing the query
+ */
 function eventQueryResultToEventArray(results) {
-    var events = [],
-        userCache = new UserCache();
+    const userCache = new UserCache();
 
     // transform the row in to a hierarchy of objects
-    results.rows.forEach(function(eventData) {
-        var event = eventQueryRowToEvent(eventData, userCache);
-        events.push(event);
+    const events = results.rows.map((eventData) => {
+        return eventQueryRowToEvent(eventData, userCache);
     });
 
     return events;
 }
 
+/**
+ * @param {UserCache} userCache
+ */
 function eventQueryRowToEvent(eventData, userCache) {
     var ownerUser,
         createdByUser,
@@ -172,6 +185,12 @@ module.exports = {
             });
     },
 
+    /**
+     * Finds the event with the specified ID within the context of the
+     * given user.
+     * @param {number} contextUserId The ID of the user to retrieve event info fo.
+     * @param {number} eventId The ID of the event to retrieve.
+     */
     findEventById(contextUserId, eventId) {
         if (!util.isInt(eventId)) {
             return Q.reject('Invalid event ID. An event ID is a number');
@@ -182,9 +201,7 @@ module.exports = {
                 text: findByIdSql,
                 values: [contextUserId, eventId]
             })
-            .then((results) => {
-                return eventQueryResultToEventArray(results);
-            })
+            .then(eventQueryResultToEventArray)
             .then((events) => {
                 if (events && events.length > 0) {
                     return events[0];

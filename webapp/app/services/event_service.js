@@ -11,13 +11,12 @@ const eventsDataSource = require('../data_sources/events');
 const registrationsDataSource = require('../data_sources/registration');
 
 class EventAndRegistrationsModel {
-    constructor(event, attending) {
+    constructor(event, attending, totalRegistrations) {
         this.event = event;
         this.myRegistration = event.myRegistration;
         this.hasRegistration = typeof event.myRegistration !== 'undefined';
         this.attending = (attending) ? attending.registrations : [];
-        this.totalRegistrations = (attending) ? attending.totalCount : 0;
-        this.hasMoreRegistrations = attending && attending.hasMoreRegistrations;
+        this.totalRegistrations = totalRegistrations;
     }
 }
 
@@ -46,7 +45,22 @@ module.exports = {
             })
             .then((eventAndRegistrations) => {
                 if (eventAndRegistrations) {
-                    return new EventAndRegistrationsModel(eventAndRegistrations.event, eventAndRegistrations.attending)
+                    return registrationsDataSource.getTotalNumberOfRegistrations(eventId)
+                        .then((totalRegistrations) => {
+                            return Object.assign(eventAndRegistrations, {
+                                totalRegistrations: totalRegistrations
+                            });
+                        })
+                } else {
+                    return undefined;
+                }
+            })
+            .then((eventAndRegistrations) => {
+                if (eventAndRegistrations) {
+                    return new EventAndRegistrationsModel(
+                        eventAndRegistrations.event,
+                        eventAndRegistrations.attending,
+                        eventAndRegistrations.totalRegistrations)
                 } else {
                     return undefined;
                 }
