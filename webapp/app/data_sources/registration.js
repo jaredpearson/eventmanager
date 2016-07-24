@@ -228,10 +228,9 @@ module.exports = {
     },
 
     findRegistrationByEventIdAndUserId: function(eventId, userId) {
-        var client;
         return db.query({
                 name: 'registration_find_for_event_and_user',
-                query: `SELECT
+                text: `SELECT
                     registrations_id id,
                     event_id eventId,
                     user_id userId,
@@ -250,7 +249,7 @@ module.exports = {
     findRegistrationById: function(registrationId) {
         return db.query({
                 name: 'registration_find_by_id',
-                query: `SELECT
+                text: `SELECT
                     registrations_id id,
                     event_id eventId,
                     user_id userId,
