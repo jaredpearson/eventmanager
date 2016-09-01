@@ -1,25 +1,20 @@
 'use strict';
 
-var router = require('express').Router(),
-    auth = require('../middlewares/auth'),
-    util = require('../util'),
-    Q = require('q'),
-    _ = require('underscore'),
-    eventsDataSource = require('../data_sources/events'),
-    registrationsDataSource = require('../data_sources/registration'),
-    ui = require('../ui');
+const router = require('express').Router();
+const auth = require('../middlewares/auth');
+const util = require('../util');
+const Q = require('q');
+const _ = require('underscore');
+const eventsDataSource = require('../data_sources/events');
+const registrationsDataSource = require('../data_sources/registration');
+const ui = require('../ui');
 
 function buildPagination(urlBuilderFn, total, size, offset) {
-    var numberOfPages = Math.ceil(total / size);
-    var isOnFirstPage = (offset < size);
-    var isOnLastPage = (offset > total - size);
-
     var action;
     var actions = [];
     var index = 0;
     var activeIndex = -1;
-    var i = -1;
-    for (i = 0; i < total; i = i + size) {
+    for (let i = 0; i < total; i = i + size) {
         action = {
             offset: i,
             label: index + 1,
@@ -41,9 +36,11 @@ function buildPagination(urlBuilderFn, total, size, offset) {
     };
 }
 
-function createRegistrationPageUrl(eventId, offset) {
-    offset = offset || 0;
-    return '/events/' + eventId + '/registrations?offset=' + offset;
+function createRegistrationPageUrlBuilder(eventId) {
+    return (i, total, size, offset) => {
+        offset = offset || 0;
+        return '/events/' + eventId + '/registrations?offset=' + offset;
+    };
 }
 
 router.get('/events/:eventId/registrations', auth(), function(req, res) {
@@ -53,8 +50,6 @@ router.get('/events/:eventId/registrations', auth(), function(req, res) {
         return;
     }
     var contextUserId = req.session.user_id;
-    var event;
-    var registrations;
     var registrationsPerPage = 100;
     var offset = parseInt(req.query.offset, 10) || 0;
 
@@ -64,41 +59,40 @@ router.get('/events/:eventId/registrations', auth(), function(req, res) {
     }
 
     eventsDataSource.findEventById(contextUserId, eventId)
-        .then(function(foundEvent) {
-            event = foundEvent;
-            return Q(foundEvent);
-        })
-        .then(function(event) {
-            if (event) {
-                return registrationsDataSource.findRegistrationsForEvent(contextUserId, event.id, registrationsPerPage, offset);
-            } else {
-                return Q(undefined);
+        .then((eventData) => {
+            if (!eventData) {
+                return undefined;
             }
-        })
-        .then(function(foundRegistrations) {
-            registrations = foundRegistrations;
-            return Q(foundRegistrations);
-        })
-        .then(function() {
-            if (event) {
-                var totalRegistrations = registrations ? registrations.totalCount : 0;
-                var pagination = buildPagination(function(offset) {
-                    return createRegistrationPageUrl(eventId, offset)
-                }, totalRegistrations, registrationsPerPage, offset);
 
-                res.render('pages/event_registrations', {
-                    event: event, 
-                    registrations: registrations ? registrations.registrations : [],
-                    totalRegistrations: totalRegistrations,
-                    pagination: pagination
-                });
-            } else {
-                res.sendStatus(404);
+            return registrationsDataSource.findRegistrationsForEvent(contextUserId, eventData.id, registrationsPerPage, offset)
+                .then((registrationsQueryResult) => ({
+                    event: eventData,
+                    registrationsQueryResult: registrationsQueryResult
+                }));
+        })
+        .then((eventAndRegistrations) => {
+            if (!eventAndRegistrations) {
+                return res.sendStatus(404);
             }
+
+            const event = eventAndRegistrations.event;
+            const registrationsQueryResult = eventAndRegistrations.registrationsQueryResult;
+            const totalRegistrations = registrationsQueryResult ? registrationsQueryResult.total : 0;
+
+            const pagination = buildPagination(
+                createRegistrationPageUrlBuilder(event.id),
+                totalRegistrations,
+                registrationsPerPage,
+                offset);
+
+            res.render('pages/event_registrations', {
+                event: event, 
+                registrations: registrationsQueryResult ? registrationsQueryResult.items : [],
+                totalRegistrations: totalRegistrations,
+                pagination: pagination
+            });
         })
-        .fail(function(err) {
-            ui.showErrorPage(res, err);
-        })
+        .fail((err) => ui.showErrorPage(res, err))
         .done();
 });
 

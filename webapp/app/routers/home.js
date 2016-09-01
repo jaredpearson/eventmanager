@@ -1,24 +1,21 @@
 'use strict';
 
-var router = require('express').Router(),
-    auth = require('../middlewares/auth'),
-    eventsDataSource = require('../data_sources/events'),
-    ui = require('../ui');
+const router = require('express').Router();
+const auth = require('../middlewares/auth');
+const eventService = require('../services/event_service');
+const ui = require('../ui');
 
-router.get('/home', auth(), function(req, res) {
+router.get('/home', auth(), (req, res) => {
     var contextUserId = req.session.user_id;
 
-    eventsDataSource.getUpcomingEvents(contextUserId)
-        .then(function(events) {
+    eventService.getUpcomingEvents(contextUserId)
+        .then((events) => {
             res.render('pages/home', {
                 events: events
             });
         })
-        .fail(function(err) {
-            ui.showErrorPage(res, err);
-        })
+        .fail((err) => ui.showErrorPage(res, err))
         .done();
-
 });
 
 module.exports.router = router;

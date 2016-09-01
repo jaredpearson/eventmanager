@@ -3,7 +3,6 @@
 const db = require('../db');
 const moment = require('moment-timezone');
 const util = require('../util');
-const EventModel = require('../models/event');
 const UserModel = require('../models/user');
 const Q = require('q');
 
@@ -48,6 +47,37 @@ const top10UpcomingSql =  `SELECT e.events_id,
                          ORDER BY e.start ASC, e.events_id
                          LIMIT 10`;
 
+function formatAsHtml(text) {
+    if (!text) {
+        return text;
+    }
+
+    var textAsHtml;
+
+    // escape &, <, >, ", etc
+    textAsHtml = _.escape(text);
+
+    // turn line breaks into HTML line breaks
+    textAsHtml = textAsHtml.replace(/\n/g, '<br />');
+
+    return textAsHtml;
+}
+
+class EventModel {
+    constructor(eventData) {
+        this.id = eventData.id;
+        this.name = eventData.name;
+        this.start = eventData.start;
+        this.description = eventData.description;
+        this.descriptionHtml = formatAsHtml(eventData.description);
+        this.myRegistration = eventData.myRegistration;
+    }
+}
+
+/**
+ * Simple in-memory cache so that users of the same ID can reuse the 
+ * same objects
+ */
 class UserCache {
     constructor() {
         this.usersById = {};
@@ -81,7 +111,8 @@ class UserCache {
 /**
  * Converts the query results from the findByIdSql query into an array of 
  * events.
- * @param results the results from executing the query
+ * @param {{rows: []}} results the results from executing the query
+ * @returns {EventModel[]}
  */
 function eventQueryResultToEventArray(results) {
     const userCache = new UserCache();
@@ -95,7 +126,9 @@ function eventQueryResultToEventArray(results) {
 }
 
 /**
+ * @param {Object} eventData the event information from the query row
  * @param {UserCache} userCache
+ * @returns {EventModel} 
  */
 function eventQueryRowToEvent(eventData, userCache) {
     var ownerUser,
@@ -125,16 +158,13 @@ function eventQueryRowToEvent(eventData, userCache) {
         };
     }
     
-    // TODO assume the user's timezone is PST
-    const timezone = 'America/Los_Angeles';
-
     return new EventModel({
         id: eventData.events_id,
         name: eventData.event_name,
         owner: ownerUser,
-        start: moment.tz(eventData.start, 'Etc/GMT+0').tz(timezone),
+        start: moment.tz(eventData.start, 'Etc/GMT+0'),
         description: eventData.description,
-        created: moment.tz(eventData.created, 'Etc/GMT+0').tz(timezone),
+        created: moment.tz(eventData.created, 'Etc/GMT+0'),
         createdBy: createdByUser,
         myRegistration: myRegistration
     });
@@ -180,9 +210,7 @@ module.exports = {
                 text: top10UpcomingSql,
                 values: [contextUserId]
             })
-            .then((results) => {
-                return eventQueryResultToEventArray(results);
-            });
+            .then(eventQueryResultToEventArray);
     },
 
     /**

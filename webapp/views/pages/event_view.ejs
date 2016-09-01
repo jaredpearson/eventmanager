@@ -24,32 +24,32 @@
                 <div>
                     <h3>Attending</h3>
                     <div id="event-registrations-container">
-                        <% if (attending.length > 0) { %>
-                            <% attending.forEach(function(registration) { %>
+                        <% if (event.attendees.length > 0) { %>
+                            <% event.attendees.forEach(function(attendee) { %>
                                 <div>
-                                    <%= registration.user ? registration.user.name : '' %>
+                                    <%= attendee.name %>
                                 </div>
                             <% }) %>
                         <% } else { %>
                             No attendees yet.
                         <% } %>
                     </div>
-                    <% if (totalRegistrations > 0) { %>
-                        <div><a href="/events/<%= event.id %>/registrations">View All <%= totalRegistrations %> Registrations</a></div>
+                    <% if (event.registrations.total > 0) { %>
+                        <div><a href="/events/<%= event.id %>/registrations">View All <%= event.registrations.total %> Registrations</a></div>
                     <% } %>
                 </div>
             </div>
             <div class="col-xs-12 col-md-4">
                 <div class="rsvp-container">
-                    <div id="attending_question" class="<%= hasRegistration ? 'hidden' : 'show' %>">
+                    <div id="attending_question" class="<%= event.myRegistration ? 'hidden' : 'show' %>">
                         <h2>Will you attend?</h2>
                         <a href="#" id="attend_yes" class="btn btn-default" role="button">Yes</a>
                         <a href="#" id="attend_no" class="btn btn-default" role="button">No</a>
                     </div>
-                    <div id="attending_confirmed" class="<%= hasRegistration ? 'show' : 'hidden' %>">
+                    <div id="attending_confirmed" class="<%= event.myRegistration ? 'show' : 'hidden' %>">
                         <h2>Your RSVP</h2>
-                        <div id="attending_confirmed_yes" class="<%= myRegistration && myRegistration.attending ? 'show' : 'hidden' %>">Yes</div>
-                        <div id="attending_confirmed_no" class="<%= myRegistration && myRegistration.attending ? 'hidden' : 'show' %>">No</div>
+                        <div id="attending_confirmed_yes" class="<%= event.myRegistration && event.myRegistration.attending ? 'show' : 'hidden' %>">Yes</div>
+                        <div id="attending_confirmed_no" class="<%= event.myRegistration && event.myRegistration.attending ? 'hidden' : 'show' %>">No</div>
                         <div style="font-size: 0.9em; padding-top: 1em;"><a href="#" id="attending_change">Change</a>
                     </div>
                 </div>
@@ -58,9 +58,7 @@
     </div>
 <script>
 var sessionId = '<%- sessionId %>';
-var eventData = {
-    myRegistration: <%- event && event.myRegistration ? JSON.stringify(event.myRegistration) : "null" %>
-}
+var eventData = <%- JSON.stringify(event) %>;
 var state = {
     showRsvpForm: !eventData.myRegistration
 };

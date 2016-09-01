@@ -16,16 +16,13 @@ router.get('/events/:eventId', auth(), (req, res) => {
     const contextUserId = req.session.user_id;
     
     eventService.findEventAndRegistrations(contextUserId, eventId)
-        .then((eventAndRegistration) => {
-            if (eventAndRegistration) {
-                res.render('pages/event_view', Object.assign(
-                    {},
-                    eventAndRegistration,
-                    {
-                        // TODO: generate a single token on login instead of each page view
-                        sessionId: session.generateSessionToken({id: contextUserId})
-                    }
-                ));
+        .then((event) => {
+            if (event) {
+                res.render('pages/event_view', {
+                    // TODO: generate a single token on login instead of each page view
+                    sessionId: session.generateSessionToken({id: contextUserId}),
+                    event: event
+                });
             } else {
                 res.sendStatus(404);
             }

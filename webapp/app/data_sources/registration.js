@@ -1,14 +1,13 @@
 'use strict';
 
-var db = require('../db'),
-    UserModel = require('../models/user'),
-    _ = require('underscore');
+const db = require('../db');
+const UserModel = require('../models/user');
+const _ = require('underscore');
 
 class RegistrationQueryResult {
-    constructor(registrations, totalCount) {
-        this.registrations = registrations;
-        this.totalCount = totalCount;
-        this.hasMoreRegistrations = this.registrations.length > totalCount;
+    constructor(items, total) {
+        this.items = items;
+        this.total = total;
     }
 }
 
@@ -72,8 +71,8 @@ function firstRowOrUndefined(queryResult) {
 }
 
 function createRegistrationsArrayFromQueryResult(result) {
-    return result.rows.map(function(row) {
-        var user;
+    return result.rows.map((row) => {
+        let user;
 
         if (row.user_id) {
             // TODO: change to create user models only once
@@ -127,6 +126,14 @@ module.exports = {
             });
     },
 
+    /**
+     * Gets a page of registrations for an event.
+     * @param {Number} contextUserId ID of the user that this view should be built for
+     * @param {Number} eventId ID of the event to load registrations for
+     * @param {Number} [limit=20] the maximum number of registrations to load
+     * @param {Number} [offset=0] the number of elements to skip before starting to add registrations 
+     * @returns {Promise<RegistrationQueryResult>}
+     */
     findRegistrationsForEvent(contextUserId, eventId, limit, offset) {
         var client;
 
@@ -138,7 +145,7 @@ module.exports = {
             throw new Error('Offset must not be negative. \nactual: ' + offset);
         }
 
-        limit = limit || 0;
+        limit = limit || 20;
         if (!_.isNumber(limit) || !_.isFinite(limit) || limit == NaN) {
             throw new Error('Limit value is not a valid number. \nactual: ' + limit);
         }
@@ -184,6 +191,12 @@ module.exports = {
             });
     },
 
+    /**
+     * Gets a page of registrations for an event that are all attending.
+     * @param {Number} contextUserId ID of the user that this view should be built for
+     * @param {Number} eventId ID of the event to load registrations for
+     * @returns {Promise<RegistrationQueryResult>}
+     */
     findAttendingRegistrationsForEvent: function(contextUserId, eventId) {
         var client;
 
@@ -227,6 +240,13 @@ module.exports = {
             });
     },
 
+    /**
+     * Gets the registration for a user at the specified event. If the user doesn't have a
+     * registration, then undefined is returned.
+     * @param {Number} eventId ID of the event to load the registration for
+     * @param {Number} userId ID of the user to load the registration for
+     * @returns {Promise<Object>}
+     */
     findRegistrationByEventIdAndUserId: function(eventId, userId) {
         return db.query({
                 name: 'registration_find_for_event_and_user',
@@ -246,6 +266,12 @@ module.exports = {
             .then(firstRowOrUndefined);
     },
 
+    /**
+     * Gets the registration with the specified ID. If the registration doesn't exist, then 
+     * undefined is returned.
+     * @param {Number} registrationId ID of the registration to load
+     * @returns {Promise<Object>}
+     */
     findRegistrationById: function(registrationId) {
         return db.query({
                 name: 'registration_find_by_id',
@@ -263,6 +289,12 @@ module.exports = {
             .then(firstRowOrUndefined);
     },
 
+    /**
+     * Updates the attending property of the registration to the specified value
+     * @param {Number} registrationId ID of the registration to update
+     * @param {Boolean} attending value to update the property to
+     * @returns {Promise<Object>}
+     */
     updateAttending(registrationId, attending) {
         return db.query(`UPDATE Registrations
                 SET attending = $2::BOOLEAN

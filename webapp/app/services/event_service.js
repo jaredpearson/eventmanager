@@ -10,13 +10,57 @@
 const eventsDataSource = require('../data_sources/events');
 const registrationsDataSource = require('../data_sources/registration');
 
+// TODO assume the user's timezone is PST
+const timezone = 'America/Los_Angeles';
+
 class EventAndRegistrationsModel {
-    constructor(event, attending, totalRegistrations) {
-        this.event = event;
-        this.myRegistration = event.myRegistration;
-        this.hasRegistration = typeof event.myRegistration !== 'undefined';
-        this.attending = (attending) ? attending.registrations : [];
-        this.totalRegistrations = totalRegistrations;
+    constructor(eventData, attendingQueryResult, registrationQueryResult) {
+        this.id = eventData.id;
+        this.name = eventData.name;
+        this.descriptionHtml = eventData.descriptionHtml;
+
+        const startTz = eventData.start.tz(timezone);
+        this.start = startTz;
+        this.startDateFormatted = startTz.format('ddd MMM D');   // Tues Sep 8
+        this.startFullDateFormatted = startTz.format('dddd, MMMM D, YYYY'); // Tuesday, September 8, 2015
+        this.startTimeFormatted = startTz.format('H:mm A z');    // 10:33 AM PST
+
+        if (attendingQueryResult) {
+            this.attendees = attendingQueryResult.items.map((registration) => {
+                return {
+                    name: registration.user.name
+                };
+            });
+        } else {
+            this.attendees = [];
+        }
+
+        if (eventData.myRegistration) {
+            this.myRegistration = {
+                id: eventData.myRegistration.id,
+                attending: eventData.myRegistration.attending
+            }
+        } else {
+            this.myRegistration = null;
+        }
+
+        this.registrations = {
+            total: registrationQueryResult.total,
+            items: registrationQueryResult.items
+        };
+    }
+}
+
+class EventModel {
+    constructor(eventData) {
+        this.id = eventData.id;
+        this.name = eventData.name;
+
+        const startTz = eventData.start.tz(timezone);
+        this.start = startTz;
+        this.startDateFormatted = startTz.format('ddd MMM D');   // Tues Sep 8
+        this.startFullDateFormatted = startTz.format('dddd, MMMM D, YYYY'); // Tuesday, September 8, 2015
+        this.startTimeFormatted = startTz.format('H:mm A z');    // 10:33 AM PST
     }
 }
 
@@ -33,38 +77,48 @@ module.exports = {
     findEventAndRegistrations(contextUserId, eventId) {
         return eventsDataSource.findEventById(contextUserId, eventId)
             .then((event) => {
-                if (event) {
-                    return registrationsDataSource.findAttendingRegistrationsForEvent(contextUserId, event.id)
-                        .then((attending) => ({
-                            event: event,
-                            attending: attending
-                        }));
-                } else {
+                if (!event) {
                     return undefined;
                 }
+
+                return registrationsDataSource.findAttendingRegistrationsForEvent(contextUserId, event.id)
+                    .then((attendingQueryResult) => ({
+                        event: event,
+                        attendingQueryResult: attendingQueryResult
+                    }));
             })
             .then((eventAndRegistrations) => {
-                if (eventAndRegistrations) {
-                    return registrationsDataSource.getTotalNumberOfRegistrations(eventId)
-                        .then((totalRegistrations) => {
-                            return Object.assign(eventAndRegistrations, {
-                                totalRegistrations: totalRegistrations
-                            });
-                        })
-                } else {
+                if (!eventAndRegistrations) {
                     return undefined;
                 }
+
+                return registrationsDataSource.findRegistrationsForEvent(contextUserId, eventId)
+                    .then((registrationQueryResult) => {
+                        return Object.assign(eventAndRegistrations, {
+                            registrationQueryResult: registrationQueryResult
+                        });
+                    })
             })
             .then((eventAndRegistrations) => {
-                if (eventAndRegistrations) {
-                    return new EventAndRegistrationsModel(
-                        eventAndRegistrations.event,
-                        eventAndRegistrations.attending,
-                        eventAndRegistrations.totalRegistrations)
-                } else {
+                if (!eventAndRegistrations) {
                     return undefined;
                 }
+
+                return new EventAndRegistrationsModel(
+                    eventAndRegistrations.event,
+                    eventAndRegistrations.attendingQueryResult,
+                    eventAndRegistrations.registrationQueryResult);
             });
+    },
+
+    /**
+     * Gets a list of upcoming events
+     * 
+     * @param {Number} contextUserId
+     */
+    getUpcomingEvents(contextUserId) {
+        return eventsDataSource.getUpcomingEvents(contextUserId)
+            .then((events) => events.map((eventData) => new EventModel(eventData)));
     }
 
 };
