@@ -4,6 +4,13 @@ const pg = require('pg');
 const Q = require('q');
 const pgconnect = Q.nbind(pg.connect, pg);
 
+// Postgres uses bigint types for count among other things. The pg
+// library converts them to strings so that there isn't a buffer overflow.
+// Since we don't expect to ever have bigint data in Postgres greater than 
+// Number.MAX_VALUE, just turn on bigint parsing. 
+// https://github.com/brianc/node-postgres/issues/378#issuecomment-19979510
+require('pg').defaults.parseInt8 = true;
+
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
