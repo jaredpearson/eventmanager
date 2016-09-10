@@ -3,6 +3,7 @@
 <head>
 <title>Event Manager</title>
 <% include ../partials/header.ejs %>
+<script src="/js/app.js"></script>
 </head>
 <body class="page-home">
     <% include ../partials/navbar.ejs %>
@@ -23,20 +24,7 @@
                 <% } %>
                 <div>
                     <h3>Attending</h3>
-                    <div id="event-registrations-container">
-                        <% if (event.attendees.length > 0) { %>
-                            <% event.attendees.forEach(function(attendee) { %>
-                                <div>
-                                    <%= attendee.name %>
-                                </div>
-                            <% }) %>
-                        <% } else { %>
-                            No attendees yet.
-                        <% } %>
-                    </div>
-                    <% if (event.registrations.total > 0) { %>
-                        <div><a href="/events/<%= event.id %>/registrations">View All <%= event.registrations.total %> Registrations</a></div>
-                    <% } %>
+                    <div id="event-registrations-container"></div>
                 </div>
             </div>
             <div class="col-xs-12 col-md-4">
@@ -57,104 +45,15 @@
         </div>
     </div>
 <script>
-var sessionId = '<%- sessionId %>';
-var eventData = <%- JSON.stringify(event) %>;
-var state = {
-    showRsvpForm: !eventData.myRegistration
-};
-function updateView() {
-    if (state.showRsvpForm) {
-        $('#attending_question').addClass('show').removeClass('hidden');
-        $('#attending_confirmed').addClass('hidden').removeClass('show');
-    } else {
-        $('#attending_question').addClass('hidden').removeClass('show');
-        $('#attending_confirmed').addClass('show').removeClass('hidden');
-    }
-    
-    if (eventData.myRegistration && eventData.myRegistration.attending) {
-        $('#attending_confirmed_yes').addClass('show').removeClass('hidden');
-        $('#attending_confirmed_no').addClass('hidden').removeClass('show');
-        $('#attend_yes').addClass('btn-success');
-        $('#attend_no').removeClass('btn-success');
-    } else {
-        $('#attending_confirmed_yes').addClass('hidden').removeClass('show');
-        $('#attending_confirmed_no').addClass('show').removeClass('hidden');
-        $('#attend_yes').removeClass('btn-success');
-        $('#attend_no').addClass('btn-success');
-    }
-    
-}
-function sendRegistrationAndRender(attending) {
-    if (!eventData.myRegistration) {
-        // if no registration yet, create one
-        $.ajax('/services/registrations', {
-                method: 'POST',
-                dataType: 'json',
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify({
-                    eventId: <%= event.id %>,
-                    attending: attending
-                }),
-                headers: {
-                    'Authorization': 'Bearer ' + sessionId
-                }
-            })
-            .done(function(data, status, xhr) {
-                if (xhr.status === 200) {
-                    eventData.myRegistration = data;
-                    state.showRsvpForm = false;
-                    updateView();
-                } else {
-                    alert('Registration failed. Please try again');
-                    console.log(data);
-                }
-            })
-            .fail(function(xhr, status, err) {
-                alert('Registration failed. Please try again');
-                console.log(arguments);
-            });
-    } else {
-        $.ajax('/services/registrations/' + eventData.myRegistration.id, {
-                method: 'PATCH',
-                dataType: 'json',
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify({
-                    attending: attending
-                }),
-                headers: {
-                    'Authorization': 'Bearer ' + sessionId
-                }
-            })
-            .done(function(data, status, xhr) {
-                if (xhr.status === 200) {
-                    eventData.myRegistration.attending = attending;
-                    state.showRsvpForm = false;
-                    updateView();
-                } else {
-                    alert('Registration failed. Please try again');
-                    console.log(data);
-                }
-            })
-            .fail(function(xhr, status, err) {
-                alert('Registration failed. Please try again');
-                console.log(arguments);
-            });
-    }
-}
 
-$(document).on('click', 'a#attend_yes', function(e) {
-    e.preventDefault();
-    sendRegistrationAndRender(true);
-});
-$(document).on('click', 'a#attend_no', function(e) {
-    e.preventDefault();
-    sendRegistrationAndRender(false);
-});
-$(document).on('click', 'a#attending_change', function(e) {
-    e.preventDefault();
-    state.showRsvpForm = true;
-    updateView();
-})
+(function() {
+    var sessionId = '<%- sessionId %>';
+    var eventData = <%- JSON.stringify(event) %>;
+    var eventStore = new EventStore(sessionId);
+    var registrationStore = new RegistrationStore(sessionId);
+    var page = new EventViewPage(eventStore, registrationStore, eventData);
+    page.init();
+})();
 
 </script>
 </body>
