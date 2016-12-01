@@ -4,6 +4,13 @@ const db = require('../db');
 const date = require('../date');
 const moment = require('moment-timezone');
 
+function convertDateToTimezone(date, timezone) {
+    if (typeof date === 'undefined' || date === null) {
+        return date;
+    }
+    return moment.tz(date, 'Etc/GMT+0').tz(timezone)
+}
+
 module.exports = {
     getMaxUsernameLength: () => 100,
 
@@ -89,10 +96,10 @@ module.exports = {
                         firstName: userData.first_name,
                         lastName: userData.last_name,
                         name: (userData.first_name + ' ' + userData.last_name).trim(),
-                        created: moment.tz(userData.created, 'Etc/GMT+0').tz(timezone),
+                        created: convertDateToTimezone(userData.created, timezone),
                         loginAttempts: userData.login_attempts,
-                        loginLock: moment.tz(userData.login_lock_timestamp, 'Etc/GMT+0').tz(timezone),
-                        lastLogin: moment.tz(userData.last_login, 'Etc/GMT+0').tz(timezone),
+                        loginLock: convertDateToTimezone(userData.login_lock_timestamp, timezone),
+                        lastLogin: convertDateToTimezone(userData.last_login, timezone),
                         numberOfLogins: userData.number_of_logins,
                         perms: {
                             manageUsers: userData.perm_manage_users
