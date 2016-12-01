@@ -3,6 +3,7 @@
 const db = require('../db');
 const date = require('../date');
 const moment = require('moment-timezone');
+const q = require('q');
 
 function convertDateToTimezone(date, timezone) {
     if (typeof date === 'undefined' || date === null) {
@@ -11,50 +12,57 @@ function convertDateToTimezone(date, timezone) {
     return moment.tz(date, 'Etc/GMT+0').tz(timezone)
 }
 
-module.exports = {
-    getMaxUsernameLength: () => 100,
-
-    auth(username, password) {
-        var client,
-            userId;
-
-        return db.connect()
-            .then(function(c) {
-                client = c;
-                return client.query('BEGIN');
-            })
-            .then(function() {
-                return client.query('SELECT users_id FROM Users WHERE username = $1::TEXT AND password = crypt($2::TEXT, password)', [username, password])
-            })
+/**
+ * Fetches the user ID associated to the username and password.
+ * @returns {Promise} that returns the user ID or undefined if the user can't be found
+ */
+function fetchUserId(clientPromise, username, password) {
+    return clientPromise.then((client) => {
+        return client.query('SELECT users_id FROM Users WHERE username = $1::TEXT AND password = crypt($2::TEXT, password)', [username, password])
             .then(function(result) {
                 if (result.rowCount > 0) {
                     return result.rows[0].users_id;
                 } else {
                     return undefined;
                 }
-            })
-            .then(function(selectedUserId) {
-                userId = selectedUserId;
-                return selectedUserId;
-            })
-            .then(function(){
-                if (!userId) {
-                    return client.query('UPDATE Users SET login_attempts = login_attempts + 1 WHERE username = $1::TEXT', [username]);
-                }
-
-                return client.query('UPDATE Users SET login_attempts = 0, login_lock_timestamp = NULL, last_login = CURRENT_TIMESTAMP, number_of_logins = number_of_logins + 1 WHERE users_id = $1::INTEGER', [userId])
-            })
-            .then(function() {
-                return client.query('COMMIT');
-            })
-            .then(function() {
-                return userId;
-            })
-            .fin(function() {
-                if (client) {
-                    client.done();
-                }
             });
+    });
+}
+
+/**
+ * Updates the login_attempts for the specified username if the user ID is not found or updates the 
+ * login statistics when the user ID is valid
+ */
+function updateUserLoginInformation(clientPromise, userIdPromise, usernamePromise) {
+    return q.spread([clientPromise, userIdPromise, usernamePromise], (client, userId, username) => {
+        if (!userId) {
+            return client.query('UPDATE Users SET login_attempts = login_attempts + 1 WHERE username = $1::TEXT', [username]);
+        }
+
+        return client.query('UPDATE Users SET login_attempts = 0, login_lock_timestamp = NULL, last_login = CURRENT_TIMESTAMP, number_of_logins = number_of_logins + 1 WHERE users_id = $1::INTEGER', [userId])
+    });
+}
+
+function commitAndCloseDbClient(clientPromise) {
+    return () => {
+        return clientPromise
+            .then((client) => {
+                client.query('COMMIT');
+                return client.done();
+            });
+    };
+}
+
+
+module.exports = {
+    getMaxUsernameLength: () => 100,
+
+    auth(username, password) {
+        const clientPromise = db.connect();
+        const userIdPromise = fetchUserId(clientPromise, username, password);
+        return updateUserLoginInformation(clientPromise, userIdPromise, username)
+            .then(() => userIdPromise)
+            .fin(commitAndCloseDbClient(clientPromise));
     },
 
     createUser(username, password, email, firstName, lastName) {
