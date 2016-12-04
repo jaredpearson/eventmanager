@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Event Manager</title>
+    <% include ../../partials/header.ejs %>
+</head>
+<body class="page-home">
+    <div class="content">
+        <div class="container">
+            <h2>Getting Started</h2>
+            <div>
+                Before accessing the events, let me know a little about yourself.
+            </div>
+            <% if (typeof errors != 'undefined') { %>
+                <div class="alert alert-danger">
+                    <% errors.forEach(function(error) { %>
+                        <div><%= error %></div>
+                    <% }) %>
+                </div>
+            <% } %>
+            <form action="/invitation/newUserSetup" method="POST">
+                <input id="inviteCode" name="inviteCode" type="hidden" value="<%= (locals.fields && locals.fields.inviteCode) || '' %>" />
+                <div class="form-group">
+                    <div><label for="username">Username</label></div>
+                    <div>
+                        <input id="username" name="username" type="text" value="<%= (locals.fields && locals.fields.username) || '' %>" class="form-control" />
+                        <div><em>Username is used to log in with. It must look like an email address and must contain @.</em></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div><label for="email">Email</label></div>
+                    <div><input id="email" name="email" type="text" value="<%= (locals.fields && locals.fields.email) || '' %>" class="form-control" /></div>
+                </div>
+                <div class="form-group">
+                    <div><label for="firstName">Name</label></div>
+                    <div>
+                        <div class="form-inline">
+                            <input id="firstName" name="firstName" type="text" value="<%= (locals.fields && locals.fields.firstName) || '' %>" class="form-control" placeholder="First" />
+                            <input id="lastName" name="lastName" type="text" value="<%= (locals.fields && locals.fields.lastName) || '' %>" class="form-control" placeholder="Last" />
+                        </div>
+                        <div><em>First and last name is public and displayed to all users.</em></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div><label for="password">Password</label></div>
+                    <div>
+                        <input id="password" name="password" type="password" value="" class="form-control" />
+                        <div><em>Password must be at least 8 characters and must contain a number and a letter.</em></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div><label for="passwordConfirm">Confirm Password</label></div>
+                    <div>
+                        <input id="passwordConfirm" name="passwordConfirm" type="password" value="" class="form-control" />
+                        <div><em>Enter your password again.</em></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div>
+                        <input id="submit" type="submit" value="Submit" class="btn btn-default" />
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

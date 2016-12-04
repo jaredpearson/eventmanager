@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Event Manager</title>
+    <% include ../../../partials/header.ejs %>
+</head>
+<body>
+    <% include ../../../partials/navbar.ejs %>
+    <div class="container">
+        <h2>Invitations</h2>
+        <p>
+            Right now, Event Manager is invite only. If you want to add a friend, click the "Generate Code"
+            button below to create a invite code that you can give to your friend. The code can be used on
+            the login form with the "Use Invite Code" link.
+        </p>
+        <form action="/setup/invitation/create" method="POST">
+            <button type="submit">Generate Code</button>
+        </form>
+    </div>
+</body>
+</html>
