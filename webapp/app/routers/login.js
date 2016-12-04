@@ -1,14 +1,18 @@
 'use strict';
 
-var router = require('express').Router(),
-    userDataSource = require('../data_sources/users'),
-    ui = require('../ui');
+const router = require('express').Router();
+const userDataSource = require('../data_sources/users');
+const ui = require('../ui');
 
-router.get('/login', function(req, res) {
-    res.render('pages/login');
+router.get('/login', (req, res) => {
+    const options = {};
+    if (req.query.username && req.query.username.trim().length > 0) {
+        options.username = req.query.username.trim();
+    }
+    res.render('pages/login', options);
 });
 
-router.post('/login', function(req, res) {
+router.post('/login', (req, res) => {
     var errors = [];
     if (!req.body.username || req.body.username > userDataSource.getMaxUsernameLength()) {
         errors.push('Username is not valid');
@@ -24,7 +28,7 @@ router.post('/login', function(req, res) {
     }
 
     userDataSource.auth(req.body.username, req.body.password)
-        .then(function(userId) {
+        .then((userId) => {
             if (userId) {
                 req.session.user_id = userId;
                 res.redirect('/home');
@@ -34,9 +38,7 @@ router.post('/login', function(req, res) {
                 });
             }
         })
-        .fail(function(err) {
-            ui.showErrorPage(res, err);
-        })
+        .fail((err) => ui.showErrorPage(res, err))
         .done();
 });
 

@@ -16,7 +16,7 @@
                     </div>
                 <% } %>
                 <form id="form-login" action="/login" method="POST" class="form-horizontal">
-                    <input id="username" name="username" type="text" class="form-control" placeholder="Username" />
+                    <input id="username" name="username" type="text" class="form-control" placeholder="Username" <% if (typeof username != 'undefined'){%>value="<%=username%>"<%} %> />
                     <input id="password" name="password" type="password" class="form-control" placeholder="Password" />
                     <input id="submit" type="submit" value="Log in" class="btn btn-default" />
                 </form>
