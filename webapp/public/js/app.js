@@ -141,6 +141,7 @@ AttendingRegistrationsComponent.prototype.render = function() {
 function RsvpComponent(attributes) {
     this.showRsvpForm = attributes.showRsvpForm;
     this.attending = attributes.attending;
+    this.hasRegistration = attributes.hasRegistration;
 }
 RsvpComponent.prototype.render = function() {
     if (this.showRsvpForm) {
@@ -160,7 +161,9 @@ RsvpComponent.prototype.render = function() {
         $('#attending_confirmed_yes').addClass('hidden').removeClass('show');
         $('#attending_confirmed_no').addClass('show').removeClass('hidden');
         $('#attend_yes').removeClass('btn-success');
-        $('#attend_no').addClass('btn-success');
+        if (this.hasRegistration) {
+            $('#attend_no').addClass('btn-success');
+        }
     }
 }
 
@@ -204,11 +207,13 @@ EventViewPage.prototype.updateView = function() {
 
     // if the user has a pending registration or a real registration and either
     // is attending, then we need to make sure the form shows as attending.
+    var hasRegistration = this.state.pendingRegistration || event.myRegistration;
     var attending = (this.state.pendingRegistration && this.state.pendingRegistration.attending) || 
         (event.myRegistration && event.myRegistration.attending);
 
     new RsvpComponent({
-        showRsvpForm: this.state.showRsvpForm, 
+        showRsvpForm: this.state.showRsvpForm,
+        hasRegistration: hasRegistration, 
         attending: attending
     }).render();
 
