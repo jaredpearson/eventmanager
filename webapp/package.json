@@ -19,6 +19,8 @@
   },
   "dependencies": {
     "body-parser": "^1.13.3",
+    "bunyan": "^1.8.5",
+    "bunyan-middleware": "^0.5.1",
     "ejs": "^2.3.3",
     "express": "^4.13.3",
     "express-session": "^1.11.3",

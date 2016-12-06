@@ -1,9 +1,11 @@
 'use strict';
 
-var express = require('express'),
-    bodyParser = require('body-parser'),
-    session = require('express-session'),
-    path = require('path');
+const express = require('express');
+const bodyParser = require('body-parser');
+const bunyanRequest = require('bunyan-middleware');
+const log = require('./app/log');
+const session = require('express-session');
+const path = require('path');
 
 var app = express();
 
@@ -19,6 +21,9 @@ app.use(session({
     saveUninitialized: false,
     resave: false
 }));
+app.use(bunyanRequest({
+    logger: log
+}))
 
 // views is directory for all template files
 app.set('views', path.join(__dirname, 'views'));
@@ -28,5 +33,5 @@ app.set('view engine', 'ejs');
 app.use('/', require('./app/routers').router);
 
 app.listen(app.get('port'), function() {
-    console.log('Node app is running on port', app.get('port'));
+    log.info('App started on port', app.get('port'));
 });
