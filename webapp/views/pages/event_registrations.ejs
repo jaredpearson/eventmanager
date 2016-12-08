@@ -35,9 +35,14 @@ function renderPagination(pagination) {
 </head>
 <body class="page-home">
     <% include ../partials/navbar.ejs %>
+    <ol class="container breadcrumb-main breadcrumb">
+        <li><a href="/">Home</a></li>
+        <li><a href="/events">Events</a></li>
+        <li><a href="/events/<%= event.id %>">Event Detail</a></li>
+        <li class="active">Registrations</li>
+    </ol>
     <div class="content container">
         <h2 id="page-title"><%= event.name %> Registrations</h2>
-        <div><a href="/events/<%= event.id %>">Event Details</a></div>
         <div id="event-registrations-container">
             <% if (totalRegistrations > 0) { %>
 
