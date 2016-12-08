@@ -14,45 +14,47 @@ class RegistrationQueryResult {
 /**
  * gets the total number of registrations for the specified event. the event ID
  * is not verified and this method will return 0 even if the event does not exist.
- * @param client the DB client returned from db.js connect
+ * @param {Promise<Client>} clientPromise the DB client returned from db.js connect
  * @param {Number} eventId the ID of the event to get registration information for
  */
-function getTotalNumberOfRegistrations(client, eventId) {
-    return client
-        .query({
-            name: 'registration_count_for_event',
-            text: 'SELECT count(*) FROM Registrations WHERE event_id = $1::INTEGER',
-            values: [eventId]
-        })
-        .then(function(result) {
-            if (result.rowCount > 0) {
-                return result.rows[0].count;
-            } else {
-                return 0;
-            }
-        });
+function getTotalNumberOfRegistrations(clientPromise, eventId) {
+    return clientPromise.then((client) => {
+        return client.query({
+                name: 'registration_count_for_event',
+                text: 'SELECT count(*) FROM Registrations WHERE event_id = $1::INTEGER',
+                values: [eventId]
+            })
+            .then((result) => {
+                if (result.rowCount > 0) {
+                    return result.rows[0].count;
+                } else {
+                    return 0;
+                }
+            });
+    });
 }
 
 /**
  * Gets the total number of attending registrations for the specified event. the event ID
  * is not verified and this method will return 0 even if the event does not exist.
- * @param client the DB client returned from db.js connect
+ * @param {Promise<Client>} clientPromise the DB client returned from db.js connect
  * @param {Number} eventId the ID of the event to get registration information for
  * @returns {Promise<Number>}
  */
-function getTotalNumberOfAttendingRegistrations(client, eventId) {
-    return client
-        .query({
-            name: 'attending_registration_count_for_event',
-            text: 'SELECT count(*) FROM Registrations WHERE event_id = $1::INTEGER AND attending = true',
-            values: [eventId]
-        })
-        .then(function(result) {
-            if (result.rowCount > 0) {
-                return result.rows[0].count;
-            } else {
-                return 0;
-            }
+function getTotalNumberOfAttendingRegistrations(clientPromise, eventId) {
+    return clientPromise.then((client) => {
+        return client.query({
+                name: 'attending_registration_count_for_event',
+                text: 'SELECT count(*) FROM Registrations WHERE event_id = $1::INTEGER AND attending = true',
+                values: [eventId]
+            })
+            .then((result) => {
+                if (result.rowCount > 0) {
+                    return result.rows[0].count;
+                } else {
+                    return 0;
+                }
+            })
         });
 }
 
@@ -86,10 +88,21 @@ function createRegistrationsArrayFromQueryResult(result) {
         return {
             id: row.registrations_id,
             eventId: row.event_id,
-            user: user,
+            user,
             attending: row.attending
         };
     });
+}
+
+/**
+ * @param {Promise<Client>} clientPromise the DB client promise
+ */
+function closeDbClientFn(clientPromise) {
+    return () => {
+        if (clientPromise) {
+            clientPromise.then((c) => c.done());
+        }
+    };
 }
 
 module.exports = {
@@ -134,11 +147,8 @@ module.exports = {
      * @param {Number} [offset=0] the number of elements to skip before starting to add registrations 
      * @returns {Promise<RegistrationQueryResult>}
      */
-    findRegistrationsForEvent(contextUserId, eventId, limit, offset) {
-        var client;
-
-        offset = offset || 0;
-        if (!_.isNumber(offset) || !_.isFinite(offset) || offset == NaN) {
+    findRegistrationsForEvent(contextUserId, eventId, limit, offset = 0) {
+        if (!_.isNumber(offset) || !_.isFinite(offset) || isNaN(offset)) {
             throw new Error('Offset value is not a valid number. \nactual:' + offset);
         }
         if (offset < 0) {
@@ -146,49 +156,41 @@ module.exports = {
         }
 
         limit = limit || 20;
-        if (!_.isNumber(limit) || !_.isFinite(limit) || limit == NaN) {
+        if (!_.isNumber(limit) || !_.isFinite(limit) || isNaN(limit)) {
             throw new Error('Limit value is not a valid number. \nactual: ' + limit);
         }
         if (limit <= 0) {
             throw new Error('Limit must be greater than 1. \nactual: ' + limit);
         }
 
-        return db.connect()
-            .then(function(c) {
-                client = c;
-                return c;
+        const clientPromise = db.connect();
+        return getTotalNumberOfRegistrations(clientPromise, eventId)
+            .then((totalRegistrations) => {
+                return clientPromise.then((client) => {
+                    return client.query({
+                            name: 'registration_find_for_event',
+                            text: `SELECT
+                                r.registrations_id,
+                                r.event_id,
+                                r.user_id,
+                                r.created,
+                                r.created_by createdBy,
+                                r.attending,
+                                u.first_name user_first_name,
+                                u.last_name user_last_name
+                                FROM Registrations r
+                                JOIN Users u ON r.user_id = u.users_id
+                                WHERE r.event_id = $1::INTEGER
+                                ORDER BY r.created, r.registrations_id 
+                                LIMIT 100 
+                                OFFSET ${offset}`,
+                            values: [eventId]
+                        })
+                        .then(createRegistrationsArrayFromQueryResult)
+                        .then((registrations) => new RegistrationQueryResult(registrations, totalRegistrations));
+                });
             })
-            .then(function(client) {
-                return getTotalNumberOfRegistrations(client, eventId);
-            })
-            .then(function(totalRegistrations) {
-                return client.query({
-                        name: 'registration_find_for_event',
-                        text: `SELECT
-                            r.registrations_id,
-                            r.event_id,
-                            r.user_id,
-                            r.created,
-                            r.created_by createdBy,
-                            r.attending,
-                            u.first_name user_first_name,
-                            u.last_name user_last_name
-                            FROM Registrations r
-                            JOIN Users u ON r.user_id = u.users_id
-                            WHERE r.event_id = $1::INTEGER
-                            ORDER BY r.created, r.registrations_id 
-                            LIMIT 100 
-                            OFFSET ${offset}`,
-                        values: [eventId]
-                    })
-                    .then(createRegistrationsArrayFromQueryResult)
-                    .then((registrations) => new RegistrationQueryResult(registrations, totalRegistrations));
-            })
-            .fin(function() {
-                if (client) {
-                    client.done();
-                }
-            });
+            .fin(closeDbClientFn(clientPromise));
     },
 
     /**
@@ -198,46 +200,35 @@ module.exports = {
      * @returns {Promise<RegistrationQueryResult>}
      */
     findAttendingRegistrationsForEvent: function(contextUserId, eventId) {
-        var client;
+        const clientPromise = db.connect();
 
-        return db.connect()
-            .then((c) => {
-                client = c;
-                return c;
+        return getTotalNumberOfAttendingRegistrations(clientPromise, eventId)
+            .then((totalRegistrations) => {
+                return clientPromise.then((client) => {
+                    return client.query({
+                            name: 'attending_registration_find_for_event',
+                            text: `SELECT
+                                r.registrations_id,
+                                r.event_id,
+                                r.user_id,
+                                r.created,
+                                r.created_by createdBy,
+                                r.attending,
+                                u.first_name user_first_name,
+                                u.last_name user_last_name
+                                FROM Registrations r
+                                JOIN Users u ON r.user_id = u.users_id
+                                WHERE r.event_id = $1::INTEGER
+                                AND r.attending = true
+                                ORDER BY r.created, r.registrations_id 
+                                LIMIT 100`,
+                            values: [eventId]
+                        })
+                        .then(createRegistrationsArrayFromQueryResult)
+                        .then((registrations) => new RegistrationQueryResult(registrations, totalRegistrations));
+                });
             })
-            .then((client) => {
-                return getTotalNumberOfAttendingRegistrations(client, eventId);
-            })
-            .then(function(totalRegistrations) {
-                return client.query({
-                        name: 'attending_registration_find_for_event',
-                        text: `SELECT
-                            r.registrations_id,
-                            r.event_id,
-                            r.user_id,
-                            r.created,
-                            r.created_by createdBy,
-                            r.attending,
-                            u.first_name user_first_name,
-                            u.last_name user_last_name
-                            FROM Registrations r
-                            JOIN Users u ON r.user_id = u.users_id
-                            WHERE r.event_id = $1::INTEGER
-                            AND r.attending = true
-                            ORDER BY r.created, r.registrations_id 
-                            LIMIT 100`,
-                        values: [eventId]
-                    })
-                    .then(createRegistrationsArrayFromQueryResult)
-                    .then(function(registrations) {
-                        return new RegistrationQueryResult(registrations, totalRegistrations);
-                    });
-            })
-            .fin(function() {
-                if (client) {
-                    client.done();
-                }
-            });
+            .fin(closeDbClientFn(clientPromise));
     },
 
     /**

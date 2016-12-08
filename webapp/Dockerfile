@@ -1,5 +1,5 @@
 
-FROM node:4.4.3
+FROM node:6.9.2
 
 # install forever
 RUN npm install forever -g

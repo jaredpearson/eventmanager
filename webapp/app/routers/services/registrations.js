@@ -1,17 +1,18 @@
 'use strict';
 
-var router = require('express').Router(),
-    auth = require('../../middlewares/restAuth'),
-    registrationDataSource = require('../../data_sources/registration');
+const router = require('express').Router();
+const auth = require('../../middlewares/restAuth');
+const registrationDataSource = require('../../data_sources/registration');
+const Q = require('q');
 
-router.post('/services/registrations', auth(), function(req, res) {
+router.post('/services/registrations', auth(), (req, res) => {
     if(!req.body) {
         return res.sendStatus(400);
     }
 
-    var eventId, 
-        userId, 
-        attending;
+    let eventId; 
+    let userId;
+    let attending;
 
     if (req.body.userId) {
         userId = req.body.userId;
@@ -46,7 +47,7 @@ router.post('/services/registrations', auth(), function(req, res) {
     }
 
     registrationDataSource.findRegistrationByEventIdAndUserId(eventId, userId)
-        .then(function(registration) {
+        .then((registration) => {
             if (registration) {
 
                 return res.status(400).json({
@@ -57,14 +58,14 @@ router.post('/services/registrations', auth(), function(req, res) {
             } else {
 
                 return registrationDataSource.createRegistration(eventId, userId, req.session.user_id, attending)
-                    .then(function(registrationId) {
+                    .then((registrationId) => {
                         if (registrationId) {
                             return registrationDataSource.findRegistrationById(registrationId)
                         } else {
                             return Q(undefined);
                         }
                     })
-                    .then(function(registration) {
+                    .then((registration) => {
                         if (!registration) {
                             return res.sendStatus(500);
                         } else {
@@ -73,7 +74,7 @@ router.post('/services/registrations', auth(), function(req, res) {
                     });
             }
         })
-        .fail(function(err) {
+        .fail((err) => {
             console.log(err);
             res.sendStatus(500);
         })

@@ -1,10 +1,10 @@
 'use strict';
 
-function UserModel(userData) {
-    this.id = userData.id;
-    this.firstName = userData.firstName;
-    this.lastName = userData.lastName;
-    this.name = (userData.firstName + ' ' + userData.lastName).trim();
+function UserModel({id, firstName, lastName}) {
+    this.id = id;
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.name = (firstName + ' ' + lastName).trim();
 }
 
 module.exports = UserModel;
