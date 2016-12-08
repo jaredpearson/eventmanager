@@ -9,6 +9,7 @@
 
 const eventsDataSource = require('../data_sources/events');
 const registrationsDataSource = require('../data_sources/registration');
+const q = require('q');
 
 // TODO assume the user's timezone is PST
 const timezone = 'America/Los_Angeles';
@@ -75,39 +76,34 @@ module.exports = {
      * @returns {EventAndRegistrationsModel}
      */
     findEventAndRegistrations(contextUserId, eventId) {
-        return eventsDataSource.findEventById(contextUserId, eventId)
+
+        const eventPromise = eventsDataSource.findEventById(contextUserId, eventId);
+        const attendingRegistrationsPromise = eventPromise
             .then((event) => {
                 if (!event) {
                     return undefined;
                 }
 
-                return registrationsDataSource.findAttendingRegistrationsForEvent(contextUserId, event.id)
-                    .then((attendingQueryResult) => ({
-                        event: event,
-                        attendingQueryResult: attendingQueryResult
-                    }));
-            })
-            .then((eventAndRegistrations) => {
-                if (!eventAndRegistrations) {
+                return registrationsDataSource.findAttendingRegistrationsForEvent(contextUserId, event.id);
+            });
+        const registrationsPromise = eventPromise
+            .then((event) => {
+                if (!event) {
                     return undefined;
                 }
 
-                return registrationsDataSource.findRegistrationsForEvent(contextUserId, eventId)
-                    .then((registrationQueryResult) => {
-                        return Object.assign(eventAndRegistrations, {
-                            registrationQueryResult: registrationQueryResult
-                        });
-                    })
-            })
-            .then((eventAndRegistrations) => {
-                if (!eventAndRegistrations) {
+                return registrationsDataSource.findRegistrationsForEvent(contextUserId, event.id);
+            });
+        return q.spread([eventPromise, attendingRegistrationsPromise, registrationsPromise], 
+            (event, attendingRegistrations, registrations) => {
+                if (!event) {
                     return undefined;
                 }
-
+                
                 return new EventAndRegistrationsModel(
-                    eventAndRegistrations.event,
-                    eventAndRegistrations.attendingQueryResult,
-                    eventAndRegistrations.registrationQueryResult);
+                    event,
+                    attendingRegistrations,
+                    registrations);
             });
     },
 
