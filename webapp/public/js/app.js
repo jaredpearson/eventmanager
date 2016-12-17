@@ -210,6 +210,9 @@ class RsvpComponent {
         this.onAttendingChange = onAttendingChange;
     }
     attachEvents() {
+        // TODO Attaching events in this way doesn't work since
+        // the "this" object will be different when a new component
+        // is created. Change this!
         if (!RsvpComponent.eventsAttached) {
             RsvpComponent.eventsAttached = true;
 
@@ -299,6 +302,9 @@ class FeedInputComponent {
         this.onFeedInputChange = attributes.onFeedInputChange;
     }
     attachEvents() {
+        // TODO Attaching events in this way doesn't work since
+        // the "this" object will be different when a new component
+        // is created. Change this!
         if (!FeedInputComponent.eventsAttached) {
             FeedInputComponent.eventsAttached = true;
             $(document).on('click', 'button#feed-input-submit', (e) => {
