@@ -1,6 +1,7 @@
 'use strict';
 
 var distDir = 'dist';
+var distPublicDir = distDir + '/public';
 
 module.exports = function(grunt) {
     grunt.initConfig({
@@ -23,12 +24,26 @@ module.exports = function(grunt) {
         copy: {
             dist: {
                 files: [{
-                        expand: true,
-                        cwd: 'public/',
-                        src: ['**/*', '!**/*.jsx', '!**/*.less'],
-                        dest: distDir + '/public'
-                    }
-                ]
+                    expand: true,
+                    cwd: 'public/',
+                    src: ['**/*', '!**/*.js', '!**/*.less'],
+                    dest: distPublicDir
+                }]
+            }
+        },
+
+        babel: {
+            options: {
+                sourceMap: true,
+                presets: ['es2015']
+            },
+            dist: {
+                files: [{
+                    expand: true,
+                    cwd: 'public/',
+                    src: ['**/*.js'],
+                    dest: distPublicDir
+                }]
             }
         },
 
@@ -39,17 +54,18 @@ module.exports = function(grunt) {
                     cwd: 'public/stylesheets/',
                     src: '**.less',
                     ext: '.css',
-                    dest: distDir + '/public/stylesheets'
+                    dest: distPublicDir + '/stylesheets'
                 }]
             }
         },
     });
 
+    grunt.loadNpmTasks('grunt-babel');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-mkdir');
 
     grunt.registerTask('clean', ['clean:dist']);
-    grunt.registerTask('dist', ['mkdir:dist', 'copy:dist', 'less:dist']);
+    grunt.registerTask('dist', ['mkdir:dist', 'copy:dist', 'less:dist', 'babel:dist']);
 };
