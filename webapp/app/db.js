@@ -3,6 +3,7 @@
 const pg = require('pg');
 const Q = require('q');
 const pgconnect = Q.nbind(pg.connect, pg);
+const log = require('./log');
 
 // Postgres uses bigint types for count among other things. The pg
 // library converts them to strings so that there isn't a buffer overflow.
@@ -27,11 +28,15 @@ class Client{
         this.query = Q.nbind(pgclient.query, pgclient);
     }
     done() {
+        log.debug('Releasing DB connection');
         this._pgdone(this._pgclient);
     }
 }
 
 module.exports = {
+    /**
+     * @returns {Promise<Client>}
+     */
     connect() {
         return pgconnect(connectionString)
             .spread(function(client, done) {

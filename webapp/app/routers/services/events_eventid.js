@@ -4,6 +4,7 @@ const router = require('express').Router();
 const auth = require('../../middlewares/restAuth');
 const util = require('../../util');
 const eventService = require('../../services/event_service');
+const log = require('../../log');
 
 router.get('/services/events/:eventId', auth(), (req, res) => {
     const eventId = req.params.eventId;
@@ -17,8 +18,8 @@ router.get('/services/events/:eventId', auth(), (req, res) => {
         .then((event) => {
             res.json(event);
         })
-        .fail(() => {
-            console.log(err);
+        .fail((err) => {
+            log.error(err);
             res.sendStatus(500);
         })
         .done();

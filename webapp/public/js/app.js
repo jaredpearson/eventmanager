@@ -40,6 +40,65 @@ EventStore.prototype.fetchRemote = function(eventId, successCallback, failCallba
         .fail(handleAjaxFailWithAlert('Loading event failed. Please reload the page.', failCallback));
 }
 
+function EventFeedItemStore(sessionId) {
+    this.sessionId = sessionId;
+}
+/**
+ * Loads the feed items for the specified event
+ * @param {Number} eventId
+ */
+EventFeedItemStore.prototype.fetchAllFromRemote = function(eventId, successCallback, failCallback) {
+    $.ajax('/services/events/' + eventId + '/feedItems', {
+            method: 'GET',
+            dataType: 'json',
+            contentType: 'application/json; charset=utf-8',
+            headers: {
+                'Authorization': 'Bearer ' + this.sessionId
+            }
+        })
+        .done(function(data, status, xhr) {
+            if (xhr.status === 200) {
+                if (successCallback) {
+                    successCallback(data);
+                }
+            } else {
+                alert('Loading event feed items failed. Please reload the page.');
+                console.log(data, status, xhr);
+            }
+        }.bind(this))
+        .fail(handleAjaxFailWithAlert('Loading event feed items failed. Please reload the page.', failCallback));
+}
+/**
+ * Inserts a new feed item
+ * @param {{eventId: Number, text:String}} newFeedItem
+ * @param {Function} successCallback
+ * @param {Function} failCallback
+ */
+EventFeedItemStore.prototype.insertFeedItem = function(newFeedItem, successCallback, failCallback) {
+    var eventId = newFeedItem.eventId;
+    delete newFeedItem.eventId;
+    $.ajax('/services/events/' + eventId + '/feedItems', {
+            method: 'POST',
+            dataType: 'json',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(newFeedItem),
+            headers: {
+                'Authorization': 'Bearer ' + this.sessionId
+            }
+        })
+        .done(function(data, status, xhr) {
+            if (xhr.status === 200) {
+                if (successCallback) {
+                    successCallback(data);
+                }
+            } else {
+                alert('Failed to create new feed item. Please reload the page.');
+                console.log(data, status, xhr);
+            }
+        }.bind(this))
+        .fail(handleAjaxFailWithAlert('Failed to create new feed item. Please reload the page.', failCallback));
+}
+
 /**
  * Data store for Registration information
  * @param {String} sessionId the ID of the session used when connecting to the server
@@ -167,13 +226,81 @@ RsvpComponent.prototype.render = function() {
     }
 }
 
-function EventViewPage(eventStore, registrationStore, event) {
+function createFeedItemElement(feedItem) {
+    var containerEl = $('<div>').addClass('feed-item');
+    $('<div>')
+        .addClass('feed-item-header')
+        .append($('<span>').addClass('feed-item-name').text(feedItem.createdBy.name))
+        .append($('<span>').addClass('feed-item-created').text(feedItem.createdDateFormatted + ' ' + feedItem.createdTimeFormatted))
+        .appendTo(containerEl);
+    $('<div>')
+        .addClass('feed-item-text')
+        .text(feedItem.text)
+        .appendTo(containerEl);
+    return containerEl;
+}
+
+function FeedComponent(attributes) {
+    this.feedItems = (attributes.feedItems || []);
+}
+FeedComponent.prototype.render = function() {
+    var feedContainerEl = $('#feed-container').empty();
+    if (this.feedItems.length > 0) {
+        feedContainerEl.append(this.feedItems.map(createFeedItemElement));
+    } else {
+        feedContainerEl.append($('<div>Start chatting about this event</div>'))
+    }
+}
+
+function FeedInputComponent(attributes) {
+    this.feedInput = (attributes.feedInput || {});
+    this.eventId = attributes.eventId;
+    this.onFeedItemCreate = attributes.onFeedItemCreate;
+    this.onFeedInputChange = attributes.onFeedInputChange;
+}
+FeedInputComponent.prototype.attachEvents = function() {
+    if (!FeedInputComponent.eventsAttached) {
+        FeedInputComponent.eventsAttached = true;
+        $(document).on('click', 'button#feed-input-submit', function(e) {
+            e.preventDefault();
+            var text = $('#feed-item-text').val();
+            if (text && text.trim().length > 0 && this.onFeedItemCreate) {
+                this.onFeedItemCreate({
+                    eventId: this.eventId,
+                    text: text
+                });
+            }
+        }.bind(this));
+
+        $(document).on('change', '#feed-item-text', function(e) {
+            if (this.onFeedInputChange) {
+                this.onFeedInputChange({
+                    text: $('#feed-item-text').val()
+                });
+            }
+        }.bind(this));
+    }
+    return this;
+}
+FeedInputComponent.prototype.render = function() {
+    $('#feed-item-text').val(this.feedInput.text);
+    return this;
+}
+
+/**
+ * @param {EventStore} eventStore
+ * @param {RegistrationStore} registrationStore
+ * @param {EventFeedItemStore} eventFeedItemStore
+ */
+function EventViewPage(eventStore, registrationStore, eventFeedItemStore, event) {
     this.eventStore = eventStore;
     this.registrationStore = registrationStore;
+    this.eventFeedItemStore = eventFeedItemStore;
     this.eventData = event;
     this.state = {
         showRsvpForm: null,
-        pendingRegistration: null
+        pendingRegistration: null,
+        feedItems: event.feedItems.items
     };
 }
 EventViewPage.prototype.init = function() {
@@ -220,6 +347,19 @@ EventViewPage.prototype.updateView = function() {
     new AttendingRegistrationsComponent({
         event: event
     }).render();
+
+    new FeedInputComponent({
+        eventId: event.id,
+        feedInput: this.state.feedInput,
+        onFeedInputChange: this.onFeedInputChange.bind(this),
+        onFeedItemCreate: this.onFeedItemCreate.bind(this)
+    })
+        .attachEvents()
+        .render();
+
+    new FeedComponent({
+        feedItems: this.state.feedItems
+    }).render();
 };
 EventViewPage.prototype.onRegistrationUpdate = function(registration) {
     // immediately set the state of the page so that the view doesn't
@@ -257,4 +397,18 @@ EventViewPage.prototype._upsertRegistration = function(attending) {
         }
         this.registrationStore.updateRegistration(registrationId, registrationPatch, this.onRegistrationUpdate.bind(this));
     }
+};
+EventViewPage.prototype.onFeedInputChange = function(feedInput) {
+    this.state.feedInput = Object.assign({}, this.state.feedInput, feedInput);
+};
+EventViewPage.prototype.onFeedItemCreate = function(newFeedItem) {
+    this.eventFeedItemStore.insertFeedItem(newFeedItem, function() {
+        this.eventFeedItemStore.fetchAllFromRemote(this.eventData.id, function(feedItems) {
+            this.state.feedItems = feedItems.items;
+            this.state.feedInput = Object.assign({}, this.state.feedInput, {
+                text: ''
+            });
+            this.updateView();
+        }.bind(this));
+    }.bind(this));
 };
