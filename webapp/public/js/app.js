@@ -202,10 +202,41 @@ class AttendingRegistrationsComponent {
 }
 
 class RsvpComponent {
-    constructor({showRsvpForm, attending, hasRegistration}) {
+    constructor({showRsvpForm, attending, hasRegistration, onShowRsvpForm, onAttendingChange}) {
         this.showRsvpForm = showRsvpForm;
         this.attending = attending;
         this.hasRegistration = hasRegistration;
+        this.onShowRsvpForm = onShowRsvpForm;
+        this.onAttendingChange = onAttendingChange;
+    }
+    attachEvents() {
+        if (!RsvpComponent.eventsAttached) {
+            RsvpComponent.eventsAttached = true;
+
+            $(document).on('click', 'a#attend_yes', (e) => {
+                e.preventDefault();
+                if (this.onAttendingChange) {
+                    this.onAttendingChange({
+                        attending: true
+                    });
+                }
+            });
+            $(document).on('click', 'a#attend_no', (e) => {
+                e.preventDefault();
+                if (this.onAttendingChange) {
+                    this.onAttendingChange({
+                        attending: false
+                    });
+                }
+            });
+            $(document).on('click', 'a#attending_change', (e) => {
+                e.preventDefault();
+                if (this.onShowRsvpForm) {
+                    this.onShowRsvpForm();
+                }
+            });
+        }
+        return this;
     }
     render() {
         if (this.showRsvpForm) {
@@ -307,41 +338,19 @@ class EventViewPage {
         this.eventStore = eventStore;
         this.registrationStore = registrationStore;
         this.eventFeedItemStore = eventFeedItemStore;
-        this.eventData = event;
         this.state = {
-            showRsvpForm: null,
+            showRsvpForm: !event.myRegistration,
             pendingRegistration: null,
-            feedItems: event.feedItems.items
+            feedItems: event.feedItems.items,
+            event
         };
     }
     init() {
-        const eventData = this.eventData;
-
-        // initialize the state for page
-        this.state.showRsvpForm = !eventData.myRegistration;
-
-        // setup the document handlers
-        // TODO: these should be on the RsvpComponent
-        $(document).on('click', 'a#attend_yes', (e) => {
-            e.preventDefault();
-            this._upsertRegistration(true);
-        });
-        $(document).on('click', 'a#attend_no', (e) => {
-            e.preventDefault();
-            this._upsertRegistration(false);
-        });
-        $(document).on('click', 'a#attending_change', (e) => {
-            e.preventDefault();
-            this.state.showRsvpForm = true;
-            this.updateView();
-        });
-
         this.updateView();
-
         return this;
     }
     updateView() {
-        const event = this.eventData;
+        const event = this.state.event;
 
         // if the user has a pending registration or a real registration and either
         // is attending, then we need to make sure the form shows as attending.
@@ -351,12 +360,21 @@ class EventViewPage {
 
         new RsvpComponent({
             showRsvpForm: this.state.showRsvpForm,
-            hasRegistration: hasRegistration, 
-            attending: attending
-        }).render();
+            hasRegistration, 
+            attending,
+            onShowRsvpForm: () => {
+                this.state.showRsvpForm = true;
+                this.updateView();
+            },
+            onAttendingChange: ({attending}) => {
+                this._upsertRegistration(attending);
+            }
+        })
+            .attachEvents()
+            .render();
 
         new AttendingRegistrationsComponent({
-            event: event
+            event
         }).render();
 
         new FeedInputComponent({
@@ -371,6 +389,8 @@ class EventViewPage {
         new FeedComponent({
             feedItems: this.state.feedItems
         }).render();
+
+        return this;
     }
     onRegistrationUpdate(registration) {
         // immediately set the state of the page so that the view doesn't
@@ -380,16 +400,16 @@ class EventViewPage {
         this.updateView();
 
         // trigger to reload the event state from the server
-        this.eventStore.fetchRemote(this.eventData.id, (data) => {
-            this.eventData = data;
+        this.eventStore.fetchRemote(this.state.event.id, (data) => {
+            this.state.event = data;
             this.state.pendingRegistration = null;
             this.state.showRsvpForm = !data.myRegistration;
             this.updateView();
         });
     }
     _upsertRegistration(attending) {
-        const eventId = this.eventData.id;
-        const registration = this.eventData.myRegistration;
+        const eventId = this.state.event.id;
+        const registration = this.state.event.myRegistration;
         const registrationId = registration && registration.id;
         const hasRegistration = !!registrationId;
         if (!hasRegistration) {
@@ -414,7 +434,7 @@ class EventViewPage {
     }
     onFeedItemCreate(newFeedItem) {
         this.eventFeedItemStore.insertFeedItem(newFeedItem, () => {
-            this.eventFeedItemStore.fetchAllFromRemote(this.eventData.id, (feedItems) => {
+            this.eventFeedItemStore.fetchAllFromRemote(this.state.event.id, (feedItems) => {
                 this.state.feedItems = feedItems.items;
                 this.state.feedInput = Object.assign({}, this.state.feedInput, {
                     text: ''
