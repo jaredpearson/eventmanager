@@ -33,32 +33,12 @@
                 </div>
             </div>
             <div class="col-xs-12 col-md-4">
-                <div class="rsvp-container">
-                    <div id="attending_question" class="<%= event.myRegistration ? 'hidden' : 'show' %>">
-                        <h2>Will you attend?</h2>
-                        <a href="#" id="attend_yes" class="btn btn-default" role="button">Yes</a>
-                        <a href="#" id="attend_no" class="btn btn-default" role="button">No</a>
-                    </div>
-                    <div id="attending_confirmed" class="<%= event.myRegistration ? 'show' : 'hidden' %>">
-                        <h2>Your RSVP</h2>
-                        <div id="attending_confirmed_yes" class="<%= event.myRegistration && event.myRegistration.attending ? 'show' : 'hidden' %>">Yes</div>
-                        <div id="attending_confirmed_no" class="<%= event.myRegistration && event.myRegistration.attending ? 'hidden' : 'show' %>">No</div>
-                        <div style="font-size: 0.9em; padding-top: 1em;"><a href="#" id="attending_change">Change</a></div>
-                    </div>
-                </div>
+                <div id="rsvp-container" class="rsvp-container"></div>
             </div>
         </div>
         
         <div class="row">
             <div class="col-xs-12 col-md-8">
-                <h3>Discussion</h3>
-                <div id="feed-input" style="border-bottom: 1px solid #CCC">
-                    <div>Communicate with other about this event. Anyone that has access to this event will see whatever is written.</div>
-                    <div>
-                        <textarea id="feed-item-text" style="width: 100%; height: 4em"></textarea>
-                    </div>
-                    <div><button id="feed-input-submit">Post</button></div>
-                </div>
                 <div id="feed-container"></div>
             </div>
         </div>

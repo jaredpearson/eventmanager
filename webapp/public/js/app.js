@@ -171,167 +171,175 @@ class RegistrationStore {
     }
 }
 
-class AttendingRegistrationsComponent {
-    constructor({event}) {
-        this.event = event;
-        this.$el = $('#event-registrations-container');
-    }
+class AttendingRegistrationsComponent extends React.Component {
     render() {
-        this.$el.empty();
-
-        const attendeeContainerEl = $('<div>');
-        if (this.event.attendees && this.event.attendees.length > 0) {
-            this.event.attendees.forEach(function(attendee) {
-                $('<div>')
-                    .text(attendee.name)
-                    .appendTo(attendeeContainerEl);
-            })
+        const event = this.props.event;
+        let attendees = undefined;
+        if (event.attendees && event.attendees.length > 0) {
+            attendees = event.attendees
+                .map((attendee) => <div>{attendee.name}</div>)
         } else {
-            $('<div>No attendees yet.</div>')
-                .appendTo(attendeeContainerEl)
+            attendees = (<div>No attendees yet.</div>);
         }
-        this.$el.append(attendeeContainerEl);
 
-        if (this.event.registrations.total > 0) {
-            const anchorEl = $('<a>')
-                .attr('href', '/events/' + this.event.id + '/registrations')
-                .text('View All ' + this.event.registrations.total + ' Registrations');
-            $('<div>').append(anchorEl).appendTo(attendeeContainerEl);
+        let viewAllLink = undefined;
+        if (event.registrations.total > 0) {
+            viewAllLink = (
+                <div>
+                    <a href={'/events/' + event.id + '/registrations'}>
+                        View All {event.registrations.total} registrations
+                    </a>
+                </div>);
         }
+        return (
+            <div>
+                {attendees}
+                {viewAllLink}
+            </div>
+        );
     }
 }
+AttendingRegistrationsComponent.propTypes = {
+    event: React.PropTypes.object.isRequired,
+}
 
-class RsvpComponent {
-    constructor({showRsvpForm, attending, hasRegistration, onShowRsvpForm, onAttendingChange}) {
-        this.showRsvpForm = showRsvpForm;
-        this.attending = attending;
-        this.hasRegistration = hasRegistration;
-        this.onShowRsvpForm = onShowRsvpForm;
-        this.onAttendingChange = onAttendingChange;
-    }
-    attachEvents() {
-        // TODO Attaching events in this way doesn't work since
-        // the "this" object will be different when a new component
-        // is created. Change this!
-        if (!RsvpComponent.eventsAttached) {
-            RsvpComponent.eventsAttached = true;
-
-            $(document).on('click', 'a#attend_yes', (e) => {
-                e.preventDefault();
-                if (this.onAttendingChange) {
-                    this.onAttendingChange({
-                        attending: true
-                    });
-                }
-            });
-            $(document).on('click', 'a#attend_no', (e) => {
-                e.preventDefault();
-                if (this.onAttendingChange) {
-                    this.onAttendingChange({
-                        attending: false
-                    });
-                }
-            });
-            $(document).on('click', 'a#attending_change', (e) => {
-                e.preventDefault();
-                if (this.onShowRsvpForm) {
-                    this.onShowRsvpForm();
-                }
-            });
-        }
-        return this;
-    }
+class RsvpComponent extends React.Component {
     render() {
-        if (this.showRsvpForm) {
-            $('#attending_question').addClass('show').removeClass('hidden');
-            $('#attending_confirmed').addClass('hidden').removeClass('show');
+
+        const hasRegistration = this.props.hasRegistration;
+        const attending = this.props.attending;
+        let child = undefined;
+        if (this.props.showRsvpForm) {
+            child = (
+                <div id="attending_question">
+                    <h2>Will you attend?</h2>
+                    <a href="#" id="attend_yes" className={"btn btn-default " + ((hasRegistration && attending) ? 'btn-success' : '')} role="button" onClick={this.onChangeAttendingYesClick.bind(this)}>Yes</a>
+                    <a href="#" id="attend_no" className={"btn btn-default " + ((hasRegistration && !attending) ? 'btn-success' : '')} role="button" onClick={this.onChangeAttendingNoClick.bind(this)}>No</a>
+                </div>
+            );
         } else {
-            $('#attending_question').addClass('hidden').removeClass('show');
-            $('#attending_confirmed').addClass('show').removeClass('hidden');
-        }
-        
-        if (this.attending) {
-            $('#attending_confirmed_yes').addClass('show').removeClass('hidden');
-            $('#attending_confirmed_no').addClass('hidden').removeClass('show');
-            $('#attend_yes').addClass('btn-success');
-            $('#attend_no').removeClass('btn-success');
-        } else {
-            $('#attending_confirmed_yes').addClass('hidden').removeClass('show');
-            $('#attending_confirmed_no').addClass('show').removeClass('hidden');
-            $('#attend_yes').removeClass('btn-success');
-            if (this.hasRegistration) {
-                $('#attend_no').addClass('btn-success');
+            let text = undefined;
+            if (attending) {
+                text = (<div id="attending_confirmed_yes">Yes</div>);
+            } else {
+                text = (<div id="attending_confirmed_no">No</div>);
             }
+
+            child = (
+                <div id="attending_confirmed">
+                    <h2>Your RSVP</h2>
+                    {text}
+                    <div style={{fontSize: '0.9em', paddingTop: '1em'}}>
+                        <a href="#" id="attending_change" onClick={this.onShowRsvpFormClick.bind(this)}>Change</a>
+                    </div>
+                </div>
+            );
+        }
+        return child;
+    }
+    onChangeAttendingYesClick(e) {
+        e.preventDefault();
+        if (this.props.onAttendingChange) {
+            this.props.onAttendingChange({
+                attending: true
+            });
+        }
+    }
+    onChangeAttendingNoClick(e) {
+        e.preventDefault();
+        if (this.props.onAttendingChange) {
+            this.props.onAttendingChange({
+                attending: false
+            });
+        }
+    }
+    onShowRsvpFormClick(e) {
+        e.preventDefault();
+        if (this.props.onShowRsvpForm) {
+            this.props.onShowRsvpForm();
         }
     }
 }
-
-function createFeedItemElement(feedItem) {
-    const containerEl = $('<div>').addClass('feed-item');
-    $('<div>')
-        .addClass('feed-item-header')
-        .append($('<span>').addClass('feed-item-name').text(feedItem.createdBy.name))
-        .append($('<span>').addClass('feed-item-created').text(feedItem.createdDateFormatted + ' ' + feedItem.createdTimeFormatted))
-        .appendTo(containerEl);
-    $('<div>')
-        .addClass('feed-item-text')
-        .text(feedItem.text)
-        .appendTo(containerEl);
-    return containerEl;
+RsvpComponent.propTypes = {
+    showRsvpForm: React.PropTypes.bool.isRequired,
+    attending: React.PropTypes.bool.isRequired,
+    hasRegistration: React.PropTypes.bool.isRequired,
+    onShowRsvpForm: React.PropTypes.func,
+    onAttendingChange: React.PropTypes.func
 }
 
-class FeedComponent {
-    constructor({feedItems = []}) {
-        this.feedItems = feedItems;
-    }
+class FeedItemComponent extends React.Component {
     render() {
-        const feedContainerEl = $('#feed-container').empty();
-        if (this.feedItems.length > 0) {
-            feedContainerEl.append(this.feedItems.map(createFeedItemElement));
+        const feedItem = this.props.feedItem;
+        return (
+            <div className='feed-item'>
+                <div className='feed-item-header'>
+                    <span className='feed-item-name'>{feedItem.createdBy.name}</span>
+                    <span className='feed-item-created'>{feedItem.createdDateFormatted + ' ' + feedItem.createdTimeFormatted}</span>
+                </div>
+                <div className='feed-item-text'>{feedItem.text}</div>
+            </div>
+        );
+    }
+}
+FeedItemComponent.propTypes = {
+    feedItem: React.PropTypes.object.isRequired
+}
+
+class FeedComponent extends React.Component {
+    render() {
+        let children;
+        if (this.props.feedItems.length > 0) {
+            children = this.props.feedItems.map((feedItem) => <FeedItemComponent feedItem={feedItem} />);
         } else {
-            feedContainerEl.append($('<div>Start chatting about this event</div>'))
+            children = (<div>Start chatting about this event</div>);
+        }
+        return (<div>{children}</div>);
+    }
+}
+FeedComponent.propTypes = {
+    feedItems: React.PropTypes.arrayOf(React.PropTypes.object).isRequired
+}
+
+class FeedInputComponent extends React.Component {
+    render() {
+        return (
+            <div id="feed-input" style={{borderBottom: '1px solid #CCC'}}>
+                <div>Communicate with other about this event. Anyone that has access to this event will see whatever is written.</div>
+                <div>
+                    <textarea
+                        id="feed-item-text"
+                        style={{width: '100%', height: '4em'}}
+                        onChange={this.onTextChange.bind(this)}
+                        value={this.props.feedInput.text} />
+                </div>
+                <div><button id="feed-input-submit" onClick={this.onPost.bind(this)}>Post</button></div>
+            </div>
+        );
+    }
+    onTextChange(e) {
+        if (this.props.onFeedInputChange) {
+            this.props.onFeedInputChange({
+                text: e.target.value
+            });
+        }
+    }
+    onPost(e) {
+        e.preventDefault();
+        const text = this.props.feedInput.text;
+        if (text && text.trim().length > 0 && this.props.onFeedItemCreate) {
+            this.props.onFeedItemCreate({
+                eventId: this.props.eventId,
+                text
+            });
         }
     }
 }
-
-class FeedInputComponent {
-    constructor(attributes) {
-        this.feedInput = (attributes.feedInput || {});
-        this.eventId = attributes.eventId;
-        this.onFeedItemCreate = attributes.onFeedItemCreate;
-        this.onFeedInputChange = attributes.onFeedInputChange;
-    }
-    attachEvents() {
-        // TODO Attaching events in this way doesn't work since
-        // the "this" object will be different when a new component
-        // is created. Change this!
-        if (!FeedInputComponent.eventsAttached) {
-            FeedInputComponent.eventsAttached = true;
-            $(document).on('click', 'button#feed-input-submit', (e) => {
-                e.preventDefault();
-                const text = $('#feed-item-text').val();
-                if (text && text.trim().length > 0 && this.onFeedItemCreate) {
-                    this.onFeedItemCreate({
-                        eventId: this.eventId,
-                        text
-                    });
-                }
-            });
-
-            $(document).on('change', '#feed-item-text', (e) => {
-                if (this.onFeedInputChange) {
-                    this.onFeedInputChange({
-                        text: $('#feed-item-text').val()
-                    });
-                }
-            });
-        }
-        return this;
-    }
-    render() {
-        $('#feed-item-text').val(this.feedInput.text);
-        return this;
-    }
+FeedInputComponent.propTypes = {
+    feedInput: React.PropTypes.object.isRequired,
+    eventId: React.PropTypes.number.isRequired,
+    onFeedItemCreate: React.PropTypes.func,
+    onFeedInputChange: React.PropTypes.func
 }
 
 class EventViewPage {
@@ -348,7 +356,10 @@ class EventViewPage {
             showRsvpForm: !event.myRegistration,
             pendingRegistration: null,
             feedItems: event.feedItems.items,
-            event
+            event,
+            feedInput: {
+                text: ''
+            }
         };
     }
     init() {
@@ -358,45 +369,47 @@ class EventViewPage {
     updateView() {
         const event = this.state.event;
 
+        ReactDOM.render(
+            <AttendingRegistrationsComponent event={event} />,
+            document.getElementById('event-registrations-container')
+        );
+
         // if the user has a pending registration or a real registration and either
         // is attending, then we need to make sure the form shows as attending.
-        const hasRegistration = this.state.pendingRegistration || event.myRegistration;
+        const hasRegistration = this.state.pendingRegistration || !!event.myRegistration;
         const attending = (this.state.pendingRegistration && this.state.pendingRegistration.attending) || 
             (event.myRegistration && event.myRegistration.attending);
 
-        new RsvpComponent({
-            showRsvpForm: this.state.showRsvpForm,
-            hasRegistration, 
-            attending,
-            onShowRsvpForm: () => {
-                this.state.showRsvpForm = true;
-                this.updateView();
-            },
-            onAttendingChange: ({attending}) => {
-                this._upsertRegistration(attending);
-            }
-        })
-            .attachEvents()
-            .render();
+        ReactDOM.render(
+            <RsvpComponent
+                showRsvpForm={this.state.showRsvpForm}
+                hasRegistration={hasRegistration}
+                attending={attending}
+                onShowRsvpForm={this.onShowRsvpForm.bind(this)}
+                onAttendingChange={this.onAttendingChange.bind(this)} />,
+            document.getElementById('rsvp-container')
+        );
 
-        new AttendingRegistrationsComponent({
-            event
-        }).render();
-
-        new FeedInputComponent({
-            eventId: event.id,
-            feedInput: this.state.feedInput,
-            onFeedInputChange: this.onFeedInputChange.bind(this),
-            onFeedItemCreate: this.onFeedItemCreate.bind(this)
-        })
-            .attachEvents()
-            .render();
-
-        new FeedComponent({
-            feedItems: this.state.feedItems
-        }).render();
-
+        ReactDOM.render(
+            (<div>
+                <h3>Discussion</h3>
+                <FeedInputComponent
+                    eventId={event.id}
+                    feedInput={this.state.feedInput}
+                    onFeedInputChange={this.onFeedInputChange.bind(this)}
+                    onFeedItemCreate={this.onFeedItemCreate.bind(this)} />
+                <FeedComponent feedItems={this.state.feedItems} />
+            </div>),
+            document.getElementById('feed-container')
+        );
         return this;
+    }
+    onShowRsvpForm() {
+        this.state.showRsvpForm = true;
+        this.updateView();
+    }
+    onAttendingChange({attending}) {
+        this._upsertRegistration(attending);
     }
     onRegistrationUpdate(registration) {
         // immediately set the state of the page so that the view doesn't
@@ -437,6 +450,7 @@ class EventViewPage {
     }
     onFeedInputChange(feedInput) {
         this.state.feedInput = Object.assign({}, this.state.feedInput, feedInput);
+        this.updateView();
     }
     onFeedItemCreate(newFeedItem) {
         this.eventFeedItemStore.insertFeedItem(newFeedItem, () => {
