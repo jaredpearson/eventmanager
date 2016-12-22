@@ -15,6 +15,7 @@ const db = require('../db');
 const UserModel = require('../models/user');
 const moment = require('moment-timezone');
 const log = require('../log');
+const ui = require('../ui');
 
 // TODO assume the user's timezone is PST
 const timezone = 'America/Los_Angeles';
@@ -154,6 +155,7 @@ function findFeedItemPageForEvent(eventPromise) {
                         id: row.eventFeedItemId,
                         eventId: row.eventId,
                         text: row.itemText,
+                        textHtml: ui.formatAsHtml(row.itemText),
                         created: created,
                         createdDateFormatted: createdDateFormatted,
                         createdFullDateFormatted: createdFullDateFormatted,

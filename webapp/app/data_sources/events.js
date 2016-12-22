@@ -3,6 +3,7 @@
 const db = require('../db');
 const moment = require('moment-timezone');
 const util = require('../util');
+const ui = require('../ui');
 const UserModel = require('../models/user');
 const Q = require('q');
 
@@ -47,29 +48,13 @@ const top10UpcomingSql =  `SELECT e.events_id,
                          ORDER BY e.start ASC, e.events_id
                          LIMIT 10`;
 
-function formatAsHtml(text) {
-    if (!text) {
-        return text;
-    }
-
-    var textAsHtml;
-
-    // escape &, <, >, ", etc
-    textAsHtml = _.escape(text);
-
-    // turn line breaks into HTML line breaks
-    textAsHtml = textAsHtml.replace(/\n/g, '<br />');
-
-    return textAsHtml;
-}
-
 class EventModel {
     constructor(eventData) {
         this.id = eventData.id;
         this.name = eventData.name;
         this.start = eventData.start;
         this.description = eventData.description;
-        this.descriptionHtml = formatAsHtml(eventData.description);
+        this.descriptionHtml = ui.formatAsHtml(eventData.description);
         this.myRegistration = eventData.myRegistration;
     }
 }

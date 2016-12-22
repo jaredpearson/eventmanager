@@ -282,7 +282,7 @@ class FeedItemComponent extends React.Component {
                     <span className='feed-item-name'>{feedItem.createdBy.name}</span>
                     <span className='feed-item-created'>{feedItem.createdDateFormatted + ' ' + feedItem.createdTimeFormatted}</span>
                 </div>
-                <div className='feed-item-text'>{feedItem.text}</div>
+                <div className='feed-item-text' dangerouslySetInnerHTML={{__html: feedItem.textHtml}} />
             </div>
         );
     }
