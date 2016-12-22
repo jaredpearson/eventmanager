@@ -4,12 +4,15 @@
  */
 function handleAjaxFailWithAlert(msg, callback) {
     return (xhr, status, err) => {
-        alert(msg);
-        console.log(xhr, status, err);
-        if (callback) {
-            callback(msg, xhr, status, err);
-        }
+        failWithAlert(msg, callback, xhr, status, err);
     };
+}
+function failWithAlert(msg, callback, xhr, status, err) {
+    alert(msg);
+    console.log(xhr, status, err);
+    if (callback) {
+        callback(msg, xhr, status, err);
+    }
 }
 
 class EventStore {
@@ -20,24 +23,25 @@ class EventStore {
     /**
      * Loads an event with the given event ID from the server
      */
-    fetchRemote(eventId, successCallback = ()=>{}, failCallback = ()=>{}) {
-        $.ajax('/services/events/' + eventId, {
-                method: 'GET',
-                dataType: 'json',
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    'Authorization': 'Bearer ' + this.sessionId
-                }
-            })
-            .done((data, status, xhr) => {
-                if (xhr.status === 200) {
-                    successCallback(data);
-                } else {
-                    alert('Loading event failed. Please reload the page.');
-                    console.log(data, status, xhr);
-                }
-            })
-            .fail(handleAjaxFailWithAlert('Loading event failed. Please reload the page.', failCallback));
+    fetchRemote(eventId) {
+        return new Promise((resolve, reject) => {
+            $.ajax('/services/events/' + eventId, {
+                    method: 'GET',
+                    dataType: 'json',
+                    contentType: 'application/json; charset=utf-8',
+                    headers: {
+                        'Authorization': 'Bearer ' + this.sessionId
+                    }
+                })
+                .done((data, status, xhr) => {
+                    if (xhr.status === 200) {
+                        resolve(data);
+                    } else {
+                        failWithAlert('Loading event failed. Please reload the page.', reject, xhr, status);
+                    }
+                })
+                .fail(handleAjaxFailWithAlert('Loading event failed. Please reload the page.', reject));
+        });
     }
 }
 
@@ -50,53 +54,55 @@ class EventFeedItemStore {
      * Loads the feed items for the specified event
      * @param {Number} eventId
      */
-    fetchAllFromRemote(eventId, successCallback = ()=>{}, failCallback = ()=>{}) {
-        $.ajax('/services/events/' + eventId + '/feedItems', {
-                method: 'GET',
-                dataType: 'json',
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    'Authorization': 'Bearer ' + this.sessionId
-                }
-            })
-            .done((data, status, xhr) => {
-                if (xhr.status === 200) {
-                    successCallback(data);
-                } else {
-                    alert('Loading event feed items failed. Please reload the page.');
-                    console.log(data, status, xhr);
-                }
-            })
-            .fail(handleAjaxFailWithAlert('Loading event feed items failed. Please reload the page.', failCallback));
+    fetchAllFromRemote(eventId) {
+        return new Promise((resolve, reject) => {
+            $.ajax('/services/events/' + eventId + '/feedItems', {
+                    method: 'GET',
+                    dataType: 'json',
+                    contentType: 'application/json; charset=utf-8',
+                    headers: {
+                        'Authorization': 'Bearer ' + this.sessionId
+                    }
+                })
+                .done((data, status, xhr) => {
+                    if (xhr.status === 200) {
+                        resolve(data);
+                    } else {
+                        failWithAlert('Loading event feed items failed. Please reload the page.', reject, xhr, status);
+                    }
+                })
+                .fail(handleAjaxFailWithAlert('Loading event feed items failed. Please reload the page.', reject));
+        });
     }
 
     /**
      * Inserts a new feed item
      * @param {{eventId: Number, text:String}} newFeedItem
-     * @param {Function} successCallback
-     * @param {Function} failCallback
+     * @returns {Promise<Object>}
      */
-    insertFeedItem(newFeedItem, successCallback = ()=>{}, failCallback = ()=>{}) {
+    insertFeedItem(newFeedItem) {
         const eventId = newFeedItem.eventId;
         delete newFeedItem.eventId;
-        $.ajax('/services/events/' + eventId + '/feedItems', {
-                method: 'POST',
-                dataType: 'json',
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify(newFeedItem),
-                headers: {
-                    'Authorization': 'Bearer ' + this.sessionId
-                }
-            })
-            .done((data, status, xhr) => {
-                if (xhr.status === 200) {
-                    successCallback(data);
-                } else {
-                    alert('Failed to create new feed item. Please reload the page.');
-                    console.log(data, status, xhr);
-                }
-            })
-            .fail(handleAjaxFailWithAlert('Failed to create new feed item. Please reload the page.', failCallback));
+
+        return new Promise((resolve, reject) => {
+            $.ajax('/services/events/' + eventId + '/feedItems', {
+                    method: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(newFeedItem),
+                    headers: {
+                        'Authorization': 'Bearer ' + this.sessionId
+                    }
+                })
+                .done((data, status, xhr) => {
+                    if (xhr.status === 200) {
+                        resolve(data);
+                    } else {
+                        failWithAlert('Failed to create new feed item. Please reload the page.', reject, xhr, status);
+                    }
+                })
+                .fail(handleAjaxFailWithAlert('Failed to create new feed item. Please reload the page.', reject));
+        });
     }
 }
 
@@ -112,62 +118,61 @@ class RegistrationStore {
     /**
      * Inserts a new registration
      * @param {Object} newRegistration the registration to be inserted
-     * @param {Function} successCallback the callback to be invoked when the registration is inserted
+     * @returns {Promise<Object>}
      */
-    insertRegistration(newRegistration, successCallback) {
-        $.ajax('/services/registrations', {
-                method: 'POST',
-                dataType: 'json',
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify(newRegistration),
-                headers: {
-                    'Authorization': 'Bearer ' + this.sessionId
-                }
-            })
-            .done(function(data, status, xhr) {
-                if (xhr.status === 200) {
-                    if (successCallback) {
-                        successCallback(data);
+    insertRegistration(newRegistration) {
+        return new Promise((resolve, reject) => {
+            $.ajax('/services/registrations', {
+                    method: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(newRegistration),
+                    headers: {
+                        'Authorization': 'Bearer ' + this.sessionId
                     }
-                } else {
-                    alert('Registration failed. Please try again');
-                    console.log(data);
-                }
-            })
-            .fail(handleAjaxFailWithAlert('Registration failed. Please try again'));
+                })
+                .done(function(data, status, xhr) {
+                    if (xhr.status === 200) {
+                        resolve(data);
+                    } else {
+                        failWithAlert('Registration failed. Please reload the page.', reject, xhr, status);
+                    }
+                })
+                .fail(handleAjaxFailWithAlert('Registration failed. Please try again', reject));
+        });
     }
 
     /**
      * Updates the registration with the specified patch
      * @param {Number} registrationId the ID of the registration
      * @param {Object} registrationPatch the properties to be updated when patching
-     * @param {Function} successCallback the callback to be invoked when the registration is updated  
      */
-    updateRegistration(registrationId, registrationPatch, successCallback = ()=>{}) {
-        $.ajax('/services/registrations/' + registrationId, {
-                method: 'PATCH',
-                dataType: 'json',
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify(registrationPatch),
-                headers: {
-                    'Authorization': 'Bearer ' + this.sessionId
-                }
-            })
-            .done((data, status, xhr) => {
-                if (xhr.status === 200) {
+    updateRegistration(registrationId, registrationPatch) {
+        return new Promise((resolve, reject) => {
+            $.ajax('/services/registrations/' + registrationId, {
+                    method: 'PATCH',
+                    dataType: 'json',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(registrationPatch),
+                    headers: {
+                        'Authorization': 'Bearer ' + this.sessionId
+                    }
+                })
+                .done((data, status, xhr) => {
+                    if (xhr.status === 200) {
 
-                    // PATCH doesn't send back the registration so we fake it by
-                    // copying the registration in the page and updating the attending
-                    // property.
-                    const registration = Object.assign({}, registrationPatch);
-                    successCallback(registration);
+                        // PATCH doesn't send back the registration so we fake it by
+                        // copying the registration in the page and updating the attending
+                        // property.
+                        const registration = Object.assign({}, registrationPatch);
+                        resolve(registration);
 
-                } else {
-                    alert('Registration failed. Please try again');
-                    console.log(data);
-                }
-            })
-            .fail(handleAjaxFailWithAlert('Registration failed. Please try again'));
+                    } else {
+                        failWithAlert('Registration failed. Please reload the page.', reject, xhr, status);
+                    }
+                })
+                .fail(handleAjaxFailWithAlert('Registration failed. Please try again', reject));
+        });
     }
 }
 
@@ -419,12 +424,13 @@ class EventViewPage {
         this.updateView();
 
         // trigger to reload the event state from the server
-        this.eventStore.fetchRemote(this.state.event.id, (data) => {
-            this.state.event = data;
-            this.state.pendingRegistration = null;
-            this.state.showRsvpForm = !data.myRegistration;
-            this.updateView();
-        });
+        this.eventStore.fetchRemote(this.state.event.id)
+            .then((data) => {
+                this.state.event = data;
+                this.state.pendingRegistration = null;
+                this.state.showRsvpForm = !data.myRegistration;
+                this.updateView();
+            });
     }
     _upsertRegistration(attending) {
         const eventId = this.state.event.id;
@@ -438,14 +444,16 @@ class EventViewPage {
                 eventId,
                 attending
             };
-            this.registrationStore.insertRegistration(newRegistration, this.onRegistrationUpdate.bind(this));
+            this.registrationStore.insertRegistration(newRegistration)
+                .then(this.onRegistrationUpdate.bind(this));
 
         } else {
             // update an existing registration
             const registrationPatch = {
                 attending
             }
-            this.registrationStore.updateRegistration(registrationId, registrationPatch, this.onRegistrationUpdate.bind(this));
+            this.registrationStore.updateRegistration(registrationId, registrationPatch)
+                .then(this.onRegistrationUpdate.bind(this));
         }
     }
     onFeedInputChange(feedInput) {
@@ -453,14 +461,16 @@ class EventViewPage {
         this.updateView();
     }
     onFeedItemCreate(newFeedItem) {
-        this.eventFeedItemStore.insertFeedItem(newFeedItem, () => {
-            this.eventFeedItemStore.fetchAllFromRemote(this.state.event.id, (feedItems) => {
+        this.eventFeedItemStore.insertFeedItem(newFeedItem)
+            .then(() => {
+                return this.eventFeedItemStore.fetchAllFromRemote(this.state.event.id);
+            })
+            .then((feedItems) => {
                 this.state.feedItems = feedItems.items;
                 this.state.feedInput = Object.assign({}, this.state.feedInput, {
                     text: ''
                 });
                 this.updateView();
             });
-        });
     };
 }
