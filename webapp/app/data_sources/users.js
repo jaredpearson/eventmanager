@@ -1,15 +1,26 @@
 'use strict';
 
 const db = require('../db');
-const date = require('../date');
 const moment = require('moment-timezone');
 const q = require('q');
 
+/**
+ * Converts the given date in GMT+0 to the given timezone. If the date is not
+ * defined, then undefined is returned.
+ */
 function convertDateToTimezone(date, timezone) {
     if (typeof date === 'undefined' || date === null) {
         return date;
     }
     return moment.tz(date, 'Etc/GMT+0').tz(timezone)
+}
+
+/**
+ * Gets the default timezone for dates.
+ * @returns {String}
+ */
+function getDefaultTimeZone() {
+    return 'America/Los_Angeles';
 }
 
 /**
@@ -53,6 +64,28 @@ function commitAndCloseDbClient(clientPromise) {
     };
 }
 
+/**
+ * Creates a new user from the given DB row
+ */
+function convertDbRowToUser(userData) {
+    const timezone = getDefaultTimeZone();
+    return {
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        name: (userData.firstName + ' ' + userData.lastName).trim(),
+        created: convertDateToTimezone(userData.created, timezone),
+        loginAttempts: userData.loginAttempts,
+        loginLock: convertDateToTimezone(userData.loginLockTimestamp, timezone),
+        lastLogin: convertDateToTimezone(userData.lastLogin, timezone),
+        numberOfLogins: userData.numberOfLogins,
+        perms: {
+            manageUsers: userData.permManageUsers
+        }
+    };
+}
 
 module.exports = {
     getMaxUsernameLength: () => 100,
@@ -76,43 +109,60 @@ module.exports = {
             });
     },
 
+    /**
+     * Gets the user with the specified ID or undefined if no user exists.
+     * @param {Number} userId
+     */
     getUserById(userId) {
         return db.query(`
             SELECT
-                users_id id,
+                users_id "id",
                 username,
                 email,
-                first_name,
-                last_name,
+                first_name "firstName",
+                last_name "lastName",
                 created,
-                login_attempts,
-                login_lock_timestamp,
-                last_login,
-                number_of_logins,
-                perm_manage_users
+                login_attempts "loginAttempts",
+                login_lock_timestamp "loginLockTimestamp",
+                last_login "lastLogin",
+                number_of_logins "numberOfLogins",
+                perm_manage_users "permManageUsers"
             FROM Users
             WHERE users_id = $1::INTEGER
             LIMIT 1`, [userId])
             .then((result) => {
-                const timezone = date.getTimeZone();
                 if (result.rowCount > 0) {
-                    const userData = result.rows[0];
-                    return {
-                        id: userData.id,
-                        username: userData.username,
-                        email: userData.email,
-                        firstName: userData.first_name,
-                        lastName: userData.last_name,
-                        name: (userData.first_name + ' ' + userData.last_name).trim(),
-                        created: convertDateToTimezone(userData.created, timezone),
-                        loginAttempts: userData.login_attempts,
-                        loginLock: convertDateToTimezone(userData.login_lock_timestamp, timezone),
-                        lastLogin: convertDateToTimezone(userData.last_login, timezone),
-                        numberOfLogins: userData.number_of_logins,
-                        perms: {
-                            manageUsers: userData.perm_manage_users
-                        }
-                    };
+                    return convertDbRowToUser(result.rows[0]);
+                } else {
+                    return;
+                }
+            });
+    },
+
+    /**
+     * Gets the user with the specified username or undefined if no user exists.
+     * @param {String} username
+     */
+    getUserByUsername(username) {
+        return db.query(`
+            SELECT
+                users_id "id",
+                username,
+                email,
+                first_name "firstName",
+                last_name "lastName",
+                created,
+                login_attempts "loginAttempts",
+                login_lock_timestamp "loginLockTimestamp",
+                last_login "lastLogin",
+                number_of_logins "numberOfLogins",
+                perm_manage_users "permManageUsers"
+            FROM Users
+            WHERE username = $1::TEXT
+            LIMIT 1`, [username])
+            .then((result) => {
+                if (result.rowCount > 0) {
+                    return convertDbRowToUser(result.rows[0]);
                 } else {
                     return;
                 }

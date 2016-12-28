@@ -114,12 +114,27 @@ router.post('/invitation/newUserSetup', (req, res) => {
                 return;
             }
 
-            // TODO: verify that the user name is unique
             // TODO: wrap this in a DB transaction
-
-            return userDataSource.createUser(username, password, email, firstName, lastName)
-                .then(() => invitationService.useCode(inviteCode))
-                .then(() => res.redirect('/login?username=' + username));
+            // verify that the user name is unique
+            return userDataSource.getUserByUsername(username)
+                .then((user) => {
+                    if (user) {
+                        return res.render('pages/invitation/new_user_setup', {
+                            errors: ['Username is not valid or already taken. Please choose another.'],
+                            fields: {
+                                username: username,
+                                email: email,
+                                firstName: firstName,
+                                lastName: lastName,
+                                inviteCode: inviteCode
+                            }
+                        });
+                    } else {
+                        return userDataSource.createUser(username, password, email, firstName, lastName)
+                            .then(() => invitationService.useCode(inviteCode))
+                            .then(() => res.redirect('/login?username=' + username));
+                    }
+                });
         })
         .fail((err) => ui.showErrorPage(res, err))
         .done();
