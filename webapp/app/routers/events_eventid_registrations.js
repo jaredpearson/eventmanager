@@ -10,12 +10,11 @@ const registrationsDataSource = require('../data_sources/registration');
 const ui = require('../ui');
 
 function buildPagination(urlBuilderFn, total, size, offset) {
-    var action;
-    var actions = [];
-    var index = 0;
-    var activeIndex = -1;
+    let actions = [];
+    let index = 0;
+    let activeIndex = -1;
     for (let i = 0; i < total; i = i + size) {
-        action = {
+        let action = {
             offset: i,
             label: index + 1,
             active: offset >= i && offset < i + size,
@@ -32,7 +31,7 @@ function buildPagination(urlBuilderFn, total, size, offset) {
     return {
         previousAction: (activeIndex > -1 && activeIndex - 1 >= 0) ? actions[activeIndex - 1] : undefined,
         nextAction: (activeIndex > -1 && activeIndex + 1 < actions.length) ? actions[activeIndex + 1] : undefined,
-        actions: actions
+        actions
     };
 }
 
@@ -44,39 +43,33 @@ function createRegistrationPageUrlBuilder(eventId) {
 }
 
 router.get('/events/:eventId/registrations', auth(), (req, res) => {
-    var eventId = req.params.eventId;
+    const eventId = req.params.eventId;
     if (!eventId || !util.isInt(eventId)) {
         res.sendStatus(404);
         return;
     }
-    var contextUserId = req.session.user_id;
-    var registrationsPerPage = 100;
-    var offset = parseInt(req.query.offset, 10) || 0;
+    const contextUserId = req.session.user_id;
+    const registrationsPerPage = 100;
 
     // if offset is not correct, just continue with 0
+    let offset = parseInt(req.query.offset, 10) || 0;
     if (!_.isNumber(offset) || !_.isFinite(offset) || offset < 0) {
         offset = 0;
     }
 
-    eventsDataSource.findEventById(contextUserId, eventId)
-        .then((eventData) => {
+    const eventPromise = eventsDataSource.findEventById(contextUserId, eventId);
+    const registrationsPromise = eventPromise.then(eventData => {
             if (!eventData) {
                 return undefined;
             }
+            return registrationsDataSource.findRegistrationsForEvent(contextUserId, eventData.id, registrationsPerPage, offset);
+        });
 
-            return registrationsDataSource.findRegistrationsForEvent(contextUserId, eventData.id, registrationsPerPage, offset)
-                .then((registrationsQueryResult) => ({
-                    event: eventData,
-                    registrationsQueryResult: registrationsQueryResult
-                }));
-        })
-        .then((eventAndRegistrations) => {
-            if (!eventAndRegistrations) {
+    return Q.spread([eventPromise, registrationsPromise], (event, registrationsQueryResult) => {
+            if (!event) {
                 return res.sendStatus(404);
             }
 
-            const event = eventAndRegistrations.event;
-            const registrationsQueryResult = eventAndRegistrations.registrationsQueryResult;
             const totalRegistrations = registrationsQueryResult ? registrationsQueryResult.total : 0;
 
             const pagination = buildPagination(
@@ -86,10 +79,10 @@ router.get('/events/:eventId/registrations', auth(), (req, res) => {
                 offset);
 
             ui.renderStandard(req, res, 'pages/event_registrations', {
-                event: event, 
+                event, 
                 registrations: registrationsQueryResult ? registrationsQueryResult.items : [],
-                totalRegistrations: totalRegistrations,
-                pagination: pagination
+                totalRegistrations,
+                pagination
             });
         })
         .fail(ui.showErrorPageCurry(res))
