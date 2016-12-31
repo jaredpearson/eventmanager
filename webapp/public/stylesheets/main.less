@@ -7,12 +7,20 @@
     border-radius: 0px;
     margin-bottom: 0px;
 
-    & .navbar-brand {
+    & .navbar-brand,
+    & .navbar-nav > li > a,
+    & .dropdown-menu > li > a {
         color: white;
 
         &:hover {
             color: darken(rgb(255, 255, 255), 30%);
         }
+    }
+
+    .dropdown-menu {
+        background-color: #3D3D3D;
+        background-image: none;
+        color: white;
     }
 }
 

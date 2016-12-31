@@ -38,7 +38,7 @@ router.post('/login', (req, res) => {
                 });
             }
         })
-        .fail((err) => ui.showErrorPage(res, err))
+        .fail(ui.showErrorPageCurry(res))
         .done();
 });
 

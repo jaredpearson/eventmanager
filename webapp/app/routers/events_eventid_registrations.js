@@ -43,7 +43,7 @@ function createRegistrationPageUrlBuilder(eventId) {
     };
 }
 
-router.get('/events/:eventId/registrations', auth(), function(req, res) {
+router.get('/events/:eventId/registrations', auth(), (req, res) => {
     var eventId = req.params.eventId;
     if (!eventId || !util.isInt(eventId)) {
         res.sendStatus(404);
@@ -85,14 +85,14 @@ router.get('/events/:eventId/registrations', auth(), function(req, res) {
                 registrationsPerPage,
                 offset);
 
-            res.render('pages/event_registrations', {
+            ui.renderStandard(req, res, 'pages/event_registrations', {
                 event: event, 
                 registrations: registrationsQueryResult ? registrationsQueryResult.items : [],
                 totalRegistrations: totalRegistrations,
                 pagination: pagination
             });
         })
-        .fail((err) => ui.showErrorPage(res, err))
+        .fail(ui.showErrorPageCurry(res))
         .done();
 });
 

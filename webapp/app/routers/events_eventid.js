@@ -18,7 +18,7 @@ router.get('/events/:eventId', auth(), (req, res) => {
     eventService.findEventAndRegistrations(contextUserId, eventId)
         .then((event) => {
             if (event) {
-                res.render('pages/event_view', {
+                ui.renderStandard(req, res, 'pages/event_view', {
                     // TODO: generate a single token on login instead of each page view
                     sessionId: session.generateSessionToken({id: contextUserId}),
                     event: event
@@ -27,9 +27,7 @@ router.get('/events/:eventId', auth(), (req, res) => {
                 res.sendStatus(404);
             }
         })
-        .fail(function(err) {
-            ui.showErrorPage(res, err);
-        })
+        .fail(ui.showErrorPageCurry(res))
         .done();
 });
 

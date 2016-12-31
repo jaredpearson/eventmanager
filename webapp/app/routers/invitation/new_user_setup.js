@@ -48,7 +48,7 @@ router.get('/invitation/newUserSetup', (req, res) => {
                 }
             });
         })
-        .fail((err) => ui.showErrorPage(res, err))
+        .fail(ui.showErrorPageCurry(res))
         .done();
 });
 
@@ -136,7 +136,7 @@ router.post('/invitation/newUserSetup', (req, res) => {
                     }
                 });
         })
-        .fail((err) => ui.showErrorPage(res, err))
+        .fail(ui.showErrorPageCurry(res))
         .done();
 
 });

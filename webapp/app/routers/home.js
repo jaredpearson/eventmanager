@@ -9,12 +9,12 @@ router.get('/home', auth(), (req, res) => {
     var contextUserId = req.session.user_id;
 
     eventService.getUpcomingEvents(contextUserId)
-        .then((events) => {
-            res.render('pages/home', {
-                events: events
+        .then(events => {
+            ui.renderStandard(req, res, 'pages/home', {
+                events
             });
         })
-        .fail((err) => ui.showErrorPage(res, err))
+        .fail(ui.showErrorPageCurry(res))
         .done();
 });
 

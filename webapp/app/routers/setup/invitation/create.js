@@ -1,21 +1,20 @@
 'use strict';
 
-const _root = '../../..';
 const router = require('express').Router();
-const auth = require(_root + '/middlewares/auth');
-const hasPerm = require(_root + '/middlewares/hasPerm');
-const invitationService = require(_root + '/services/invitation_service');
-const ui = require(_root + '/ui');
+const auth = require('../../../middlewares/auth');
+const hasPerm = require('../../../middlewares/hasPerm');
+const invitationService = require('../../../services/invitation_service');
+const ui = require('../../../ui');
 
 router.post('/setup/invitation/create', auth(), hasPerm('manageUsers'), (req, res) => {
     const contextUserId = req.session.user_id;
     invitationService.create(contextUserId)
-        .then((invite) => {
-            res.render('pages/setup/invitation/create_success', {
+        .then(invite => {
+            ui.renderStandard(req, res, 'pages/setup/invitation/create_success', {
                 invite
             });
         })
-        .fail((err) => ui.showErrorPage(res, err))
+        .fail(ui.showErrorPageCurry(res))
         .done();
 });
 

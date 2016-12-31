@@ -26,7 +26,7 @@ router.get('/setup', auth(), (req, res) => {
     if (availableLinks.length === 0) {
         return res.sendStatus(404);
     }
-    res.render('pages/setup/home', {
+    ui.renderStandard(req, res, 'pages/setup/home', {
         links: availableLinks
     });
 });

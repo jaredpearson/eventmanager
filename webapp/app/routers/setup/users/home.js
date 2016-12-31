@@ -9,14 +9,12 @@ const ui = require('../../../ui');
 router.get('/setup/users', auth(), hasPerm('manageUsers'), (req, res) => {
 
     usersDataSource.getPageOfUsers()
-        .then((userPage) => {
-            res.render('pages/setup/users/list', {
+        .then(userPage => {
+            ui.renderStandard(req, res, 'pages/setup/users/list', {
                 users: userPage.users
             });
         })
-        .fail(function(err) {
-            ui.showErrorPage(res, err);
-        })
+        .fail(ui.showErrorPageCurry(res))
         .done();
 
 });

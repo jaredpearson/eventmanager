@@ -1,12 +1,12 @@
 'use strict';
 
-var router = require('express').Router(),
-    auth = require('../middlewares/auth'),
-    eventsDataSource = require('../data_sources/events'),
-    moment = require('moment-timezone'),
-    ui = require('../ui');
+const router = require('express').Router();
+const auth = require('../middlewares/auth');
+const eventsDataSource = require('../data_sources/events');
+const moment = require('moment-timezone');
+const ui = require('../ui');
 
-router.get('/events/new', auth(), function(req, res) {
+router.get('/events/new', auth(), (req, res) => {
 
     const defaultStart = moment()
         .add(7, 'days')
@@ -15,9 +15,9 @@ router.get('/events/new', auth(), function(req, res) {
         .second(0)
         .milliseconds(0);
 
-    res.render('pages/event_new', {
+    ui.renderStandard(req, res, 'pages/event_new', {
         start: defaultStart.format('YYYY-MM-DDTHH:mm:ss')
-    })
+    });
 });
 
 router.post('/events/new', auth(), function(req, res) {
@@ -48,7 +48,7 @@ router.post('/events/new', auth(), function(req, res) {
 
     if (errors.length > 0) {
         pageModel.errors = errors;
-        res.render('pages/event_new', pageModel);
+        ui.renderStandard(req, res, 'pages/event_new', pageModel);
         return;
     }
 
@@ -65,13 +65,11 @@ router.post('/events/new', auth(), function(req, res) {
                 res.redirect('/events/' + eventId);
             } else {
                 pageModel.errors = ['Unable to save the event'];
-                res.render('pages/event_new', pageModel);
+                ui.renderStandard(req, res, 'pages/event_new', pageModel);
             }
 
         })
-        .fail(function(err) {
-            ui.showErrorPage(res, err);
-        })
+        .fail(ui.showErrorPageCurry(res))
         .done();
 
 });

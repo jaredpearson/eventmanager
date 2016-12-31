@@ -33,7 +33,7 @@ router.post('/invitation/welcome', (req, res) => {
                 res.redirect('/invitation/newUserSetup?c=' + inviteCode);
             }
         })
-        .fail((err) => ui.showErrorPage(res, err))
+        .fail(ui.showErrorPageCurry(res))
         .done();
 });
 

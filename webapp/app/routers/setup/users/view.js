@@ -16,18 +16,16 @@ router.get('/setup/users/:userId', auth(), hasPerm('manageUsers'), (req, res) =>
     const contextUserId = req.session.user_id;
 
     usersDataSource.getUserById(userId)
-        .then((user) => {
+        .then(user => {
             if (!user) {
                 res.sendStatus(404);
                 return;
             }
-            res.render('pages/setup/users/view', {
-                user: user
+            ui.renderStandard(req, res, 'pages/setup/users/view', {
+                user
             });
         })
-        .fail(function(err) {
-            ui.showErrorPage(res, err);
-        })
+        .fail(ui.showErrorPageCurry(res))
         .done();
 
 });
