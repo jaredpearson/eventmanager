@@ -1,13 +1,13 @@
 'use strict';
 
 const router = require('express').Router();
-const auth = require('../middlewares/auth');
-const util = require('../util');
+const auth = require('../../middlewares/auth');
+const util = require('../../util');
 const Q = require('q');
 const _ = require('underscore');
-const eventsDataSource = require('../data_sources/events');
-const registrationsDataSource = require('../data_sources/registration');
-const ui = require('../ui');
+const eventsDataSource = require('../../data_sources/events');
+const registrationsDataSource = require('../../data_sources/registration');
+const ui = require('../../ui');
 
 function buildPagination(urlBuilderFn, total, size, offset) {
     let actions = [];

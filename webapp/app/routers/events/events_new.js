@@ -1,10 +1,10 @@
 'use strict';
 
 const router = require('express').Router();
-const auth = require('../middlewares/auth');
-const eventsDataSource = require('../data_sources/events');
+const auth = require('../../middlewares/auth');
+const eventsDataSource = require('../../data_sources/events');
 const moment = require('moment-timezone');
-const ui = require('../ui');
+const ui = require('../../ui');
 
 router.get('/events/new', auth(), (req, res) => {
 

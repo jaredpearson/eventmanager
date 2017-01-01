@@ -1,11 +1,11 @@
 'use strict';
 
 const router = require('express').Router(),
-    auth = require('../middlewares/auth'),
-    util = require('../util'),
-    eventService = require('../services/event_service'),
-    ui = require('../ui'),
-    session = require('../session');
+    auth = require('../../middlewares/auth'),
+    util = require('../../util'),
+    eventService = require('../../services/event_service'),
+    ui = require('../../ui'),
+    session = require('../../session');
 
 router.get('/events/:eventId', auth(), (req, res) => {
     const eventId = req.params.eventId;
